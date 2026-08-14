@@ -14,6 +14,10 @@ let max_depth = 8
    ratio of the window's smaller dimension fills it with a small margin *)
 let radius_ratio = 0.45
 let line_width = 2
+
+(* The whole snowflake animates over this many seconds whatever the depth:
+   the per-segment delay is derived from the segment count. *)
+let animation_duration = 3.0
 let depth_in_range depth = min_depth <= depth && depth <= max_depth
 
 (* [exit_invalid_depth arg] reports the rejected argument on stderr and
@@ -23,11 +27,17 @@ let exit_invalid_depth arg =
   exit 1
 ;;
 
-let draw_polyline = function
+let draw_polyline ~delay = function
   | [] -> ()
   | (x, y) :: rest ->
     moveto (truncate x) (truncate y);
-    List.iter (fun (x, y) -> lineto (truncate x) (truncate y)) rest
+    List.iter
+      (fun (x, y) ->
+         lineto (truncate x) (truncate y);
+         (* flush the X11 buffer so the segment shows before the pause *)
+         synchronize ();
+         Unix.sleepf delay)
+      rest
 ;;
 
 let run ?(depth = default_depth) () =
@@ -43,8 +53,10 @@ let run ?(depth = default_depth) () =
     cx +. (r *. cos angle), cy +. (r *. sin angle)
   in
   set_line_width line_width;
+  let segments = 3 * (1 lsl (2 * depth)) in
+  let delay = animation_duration /. float segments in
   for k = 0 to 2 do
-    draw_polyline (Koch_snowflake.koch depth (vertex k) (vertex ((k + 1) mod 3)))
+    draw_polyline ~delay (Koch_snowflake.koch depth (vertex k) (vertex ((k + 1) mod 3)))
   done;
   try ignore (read_key ()) with
   | Graphic_failure _ -> ()
