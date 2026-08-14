@@ -39,6 +39,7 @@ let run a =
   moveto (center_x + 12) (y_tip - 10);
   draw_string "y";
   set_color black;
+  set_line_width 3;
   let x0, y0 = to_pixel (Cardioid.point a 0.) in
   moveto x0 y0;
   for i = 1 to steps do
