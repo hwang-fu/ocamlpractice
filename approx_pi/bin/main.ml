@@ -13,7 +13,10 @@ let run n =
   in
   let pi = Approx_pi.approx_pi ~plot:draw_point n in
   Printf.printf "%f\n%!" pi;
-  ignore (read_key ())
+  (* Closing the window via the window manager kills the Graphics connection,
+     making [read_key] raise instead of returning. *)
+  try ignore (read_key ()) with
+  | Graphic_failure _ -> ()
 ;;
 
 let () =
