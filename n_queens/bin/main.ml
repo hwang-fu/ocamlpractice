@@ -25,24 +25,36 @@ let prev_button = { rect = { x = 80; y = 40; w = 140; h = 50 }; label = "< Prev"
 let next_button = { rect = { x = 480; y = 40; w = 140; h = 50 }; label = "Next >" }
 let inside r mx my = mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h
 
-(* A raised bevel makes the button look 3D: light on top/left, shadow on
-   bottom/right. The pressed state swaps the two and nudges the label
-   down-right, which the eye reads as the button sinking. *)
+(* Graphics has no rounded-rectangle primitive: build one from two
+   overlapping rectangles (the horizontal and vertical bars of a cross) and
+   a filled circle in each corner. *)
+let fill_round_rect x y w h rad =
+  fill_rect (x + rad) y (w - (2 * rad)) h;
+  fill_rect x (y + rad) w (h - (2 * rad));
+  fill_circle (x + rad) (y + rad) rad;
+  fill_circle (x + w - rad) (y + rad) rad;
+  fill_circle (x + rad) (y + h - rad) rad;
+  fill_circle (x + w - rad) (y + h - rad) rad
+;;
+
+(* The button face floats a few pixels above a drop shadow; pressing drops
+   the face onto it (label riding along), which the eye reads as the button
+   sinking. *)
 let draw_button ?(pressed = false) b =
   let r = b.rect in
-  let shadow = rgb 100 100 100 in
+  let rad = 12 in
+  let lift = if pressed then 0 else 3 in
+  (* erase the full extent first: the raised face sticks 3px above the
+     pressed one, and a stale strip would survive the state switch *)
+  set_color white;
+  fill_rect r.x r.y r.w (r.h + 3);
+  set_color (rgb 120 120 120);
+  fill_round_rect r.x r.y r.w r.h rad;
   set_color (rgb 225 225 225);
-  fill_rect r.x r.y r.w r.h;
-  set_color (if pressed then shadow else white);
-  fill_rect r.x (r.y + r.h - 2) r.w 2;
-  fill_rect r.x r.y 2 r.h;
-  set_color (if pressed then white else shadow);
-  fill_rect r.x r.y r.w 2;
-  fill_rect (r.x + r.w - 2) r.y 2 r.h;
+  fill_round_rect r.x (r.y + lift) r.w r.h rad;
   let tw, th = text_size b.label in
-  let nudge = if pressed then 2 else 0 in
   set_color black;
-  moveto (r.x + ((r.w - tw) / 2) + nudge) (r.y + ((r.h - th) / 2) - nudge);
+  moveto (r.x + ((r.w - tw) / 2)) (r.y + ((r.h - th) / 2) + lift);
   draw_string b.label
 ;;
 
