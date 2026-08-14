@@ -4,7 +4,9 @@ SHELL := /bin/bash
 # Every top-level directory containing a dune-project is a quiz.
 QUIZZES := $(patsubst %/dune-project,%,$(wildcard */dune-project))
 
-.PHONY: build test fmt list
+.PHONY: all build test fmt clean list
+
+all: build
 
 # $(call run_in,<command>): prompt for a quiz name; empty = run in all.
 define run_in
@@ -30,6 +32,12 @@ test:
 
 fmt:
 	@$(call run_in,dune fmt)
+
+clean:
+	@for d in $(QUIZZES); do
+	  echo "== $$d =="
+	  (cd "$$d" && dune clean) || exit 1
+	done
 
 list:
 	@printf '%s\n' $(QUIZZES)
