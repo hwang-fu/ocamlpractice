@@ -1,15 +1,16 @@
 open Graphics
 
-let size = 500
+let width = 500
+let height = 500
 
 let run n =
   Random.self_init ();
-  open_graph (Printf.sprintf " %dx%d" size size);
+  open_graph (Printf.sprintf " %dx%d" width height);
   set_window_title "Monte-Carlo approximation of pi";
-  draw_arc 0 0 size size 0 90;
+  draw_arc 0 0 width height 0 90;
   let draw_point x y inside =
     set_color (if inside then red else blue);
-    plot (int_of_float (x *. float size)) (int_of_float (y *. float size))
+    plot (int_of_float (x *. float width)) (int_of_float (y *. float height))
   in
   let pi = Approx_pi.approx_pi ~plot:draw_point n in
   Printf.printf "%f\n%!" pi;
