@@ -28,3 +28,24 @@ let rec go cols d1 d2 =
 
 (* [count n] is the number of solutions of the n-queens problem. *)
 let count n = go (upto (n - 1)) S.empty S.empty
+
+(* [solutions n] enumerates every solution as the list of queen columns, row
+   by row. Same search as [go], but the fold collects extended placements
+   instead of summing: [acc] carries the columns chosen so far (in reverse),
+   and reaching an empty [cols] yields one finished board. Solutions come out
+   sorted by first-row column. *)
+let solutions n =
+  let rec go acc cols d1 d2 =
+    if S.is_empty cols
+    then [ List.rev acc ]
+    else
+      S.fold
+        (fun c sols ->
+           let d1 = map succ (S.add c d1) in
+           let d2 = map pred (S.add c d2) in
+           sols @ go (c :: acc) (S.remove c cols) d1 d2)
+        (S.diff (S.diff cols d1) d2)
+        []
+  in
+  go [] (upto (n - 1)) S.empty S.empty
+;;
