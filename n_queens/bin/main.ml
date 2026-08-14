@@ -32,14 +32,15 @@ let draw_board n queens =
   let cell = board_px / n in
   let x0 = (win_w - (cell * n)) / 2 in
   let y0 = 150 in
-  let light = rgb 240 217 181
-  and dark = rgb 181 136 99 in
   for r = 0 to n - 1 do
     for c = 0 to n - 1 do
-      set_color (if (r + c) mod 2 = 0 then light else dark);
+      set_color (if (r + c) mod 2 = 0 then white else black);
       fill_rect (x0 + (c * cell)) (y0 + (r * cell)) cell cell
     done
   done;
+  (* border so the white edge squares stand out against the background *)
+  set_color black;
+  draw_rect x0 y0 (cell * n) (cell * n);
   set_color (rgb 190 30 30);
   (* row 0 is the top board row, while the Graphics y axis points up *)
   List.iteri
