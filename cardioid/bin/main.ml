@@ -9,6 +9,9 @@ let default_a = 200.
 let max_a = Float.min (float width /. 2.6) (float height /. 2.25)
 let steps = 200
 
+(* Pause between segments, in seconds: the full curve takes steps * delay. *)
+let delay = 0.01
+
 let run a =
   open_graph (Printf.sprintf " %dx%d" width height);
   set_window_title "Cardioid";
@@ -21,7 +24,11 @@ let run a =
   for i = 1 to steps do
     let theta = 2. *. Float.pi *. float i /. float steps in
     let x, y = to_pixel (Cardioid.point a theta) in
-    lineto x y
+    lineto x y;
+    (* X11 buffers drawing commands; synchronize flushes so each segment
+       becomes visible before we sleep. *)
+    synchronize ();
+    Unix.sleepf delay
   done;
   try ignore (read_key ()) with
   | Graphic_failure _ -> ()
