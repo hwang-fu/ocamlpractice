@@ -1,5 +1,7 @@
 (* Pure Koch-curve geometry; drawing lives in bin/main.ml. *)
 
+type point = float * float
+
 (* Rotation of the vector (x, y) by [theta] radians. *)
 let rotate theta (x, y) =
   (x *. cos theta) -. (y *. sin theta), (x *. sin theta) +. (y *. cos theta)
