@@ -3,9 +3,14 @@ open Graphics
 let width = 500
 let height = 500
 
+(* Requested top-left corner of the window (X11 geometry, origin at the
+   screen's top-left). The window manager may ignore this. *)
+let pos_x = 0
+let pos_y = 290
+
 let run n =
   Random.self_init ();
-  open_graph (Printf.sprintf " %dx%d" width height);
+  open_graph (Printf.sprintf " %dx%d+%d+%d" width height pos_x pos_y);
   set_window_title "Monte-Carlo approximation of pi";
   draw_arc 0 0 width height 0 90;
   let draw_point x y inside =
