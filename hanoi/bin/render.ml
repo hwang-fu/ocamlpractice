@@ -3,7 +3,7 @@ open Graphics
 let window_width = 1200
 let window_height = 600
 let discs = 5
-let move_delay = 0.5
+let move_delay = 0.9
 
 (* scene geometry, in pixels *)
 let base_y = 80
