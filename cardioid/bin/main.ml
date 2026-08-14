@@ -12,15 +12,10 @@ let steps = 200
 (* Pause between segments, in seconds: the full curve takes steps * delay. *)
 let delay = 0.01
 
-let run a =
-  open_graph (Printf.sprintf " %dx%d" width height);
-  set_window_title "Cardioid";
-  let center_x = width / 2 in
-  (* centering the y-span [-2a, 0.25a] puts the origin at height/2 + 7a/8 *)
-  let center_y = truncate ((float height /. 2.) +. (0.875 *. a)) in
-  let to_pixel (x, y) = center_x + truncate x, center_y + truncate y in
-  (* axes through the cardioid's origin, drawn before the animation starts;
-     the ends stop short of the border so arrowheads and labels stay visible *)
+(* Draw x/y axes crossing at (center_x, center_y), each ending in an
+   arrowhead and a label; the ends stop short of the border so both stay
+   visible. Leaves the pen color gray -- the caller sets its own. *)
+let draw_axes ~center_x ~center_y =
   set_color (rgb 110 110 110);
   let x_tip = width - 30
   and y_tip = height - 30 in
@@ -37,7 +32,17 @@ let run a =
   moveto center_x y_tip;
   lineto (center_x + 6) (y_tip - 12);
   moveto (center_x + 12) (y_tip - 10);
-  draw_string "y";
+  draw_string "y"
+;;
+
+let run a =
+  open_graph (Printf.sprintf " %dx%d" width height);
+  set_window_title "Cardioid";
+  let center_x = width / 2 in
+  (* centering the y-span [-2a, 0.25a] puts the origin at height/2 + 7a/8 *)
+  let center_y = truncate ((float height /. 2.) +. (0.875 *. a)) in
+  let to_pixel (x, y) = center_x + truncate x, center_y + truncate y in
+  draw_axes ~center_x ~center_y;
   set_color black;
   set_line_width 3;
   let x0, y0 = to_pixel (Cardioid.point a 0.) in
