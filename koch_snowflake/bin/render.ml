@@ -15,7 +15,13 @@ let max_depth = 8
 let radius_ratio = 0.45
 let line_width = 2
 let depth_in_range depth = min_depth <= depth && depth <= max_depth
-let depth_range = Printf.sprintf "[%d, %d]" min_depth max_depth
+
+(* [exit_invalid_depth arg] reports the rejected argument on stderr and
+   terminates; the accepted range stays private to this module. *)
+let exit_invalid_depth arg =
+  Printf.eprintf "error: expected a depth in [%d, %d], got %S\n" min_depth max_depth arg;
+  exit 1
+;;
 
 let draw_polyline = function
   | [] -> ()

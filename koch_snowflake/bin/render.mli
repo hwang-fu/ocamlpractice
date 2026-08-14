@@ -5,8 +5,9 @@
 (** [depth_in_range depth] is whether [depth] fits the drawing budget. *)
 val depth_in_range : int -> bool
 
-(** Human-readable form of the accepted depth bounds, for error messages. *)
-val depth_range : string
+(** [exit_invalid_depth arg] prints an error naming the accepted depth range
+    and the offending argument, then exits with a nonzero code. *)
+val exit_invalid_depth : string -> 'a
 
 (** [run ?depth ()] opens the window, draws the snowflake ([depth] defaults
     to a built-in value), and returns once a key is pressed or the window is
