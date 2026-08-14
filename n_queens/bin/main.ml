@@ -16,16 +16,34 @@ type rect =
   ; h : int
   }
 
-let prev_button = { x = 80; y = 40; w = 140; h = 50 }
-let next_button = { x = 480; y = 40; w = 140; h = 50 }
+type button =
+  { rect : rect
+  ; label : string
+  }
+
+let prev_button = { rect = { x = 80; y = 40; w = 140; h = 50 }; label = "< Prev" }
+let next_button = { rect = { x = 480; y = 40; w = 140; h = 50 }; label = "Next >" }
 let inside r mx my = mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h
 
-let draw_button r label =
+(* A raised bevel makes the button look 3D: light on top/left, shadow on
+   bottom/right. The pressed state swaps the two and nudges the label
+   down-right, which the eye reads as the button sinking. *)
+let draw_button ?(pressed = false) b =
+  let r = b.rect in
+  let shadow = rgb 100 100 100 in
+  set_color (rgb 225 225 225);
+  fill_rect r.x r.y r.w r.h;
+  set_color (if pressed then shadow else white);
+  fill_rect r.x (r.y + r.h - 2) r.w 2;
+  fill_rect r.x r.y 2 r.h;
+  set_color (if pressed then white else shadow);
+  fill_rect r.x r.y r.w 2;
+  fill_rect (r.x + r.w - 2) r.y 2 r.h;
+  let tw, th = text_size b.label in
+  let nudge = if pressed then 2 else 0 in
   set_color black;
-  draw_rect r.x r.y r.w r.h;
-  let tw, th = text_size label in
-  moveto (r.x + ((r.w - tw) / 2)) (r.y + ((r.h - th) / 2));
-  draw_string label
+  moveto (r.x + ((r.w - tw) / 2) + nudge) (r.y + ((r.h - th) / 2) - nudge);
+  draw_string b.label
 ;;
 
 let draw_board n queens =
@@ -63,31 +81,44 @@ let draw_state n sols idx =
   clear_graph ();
   draw_board n sols.(idx);
   draw_status n idx (Array.length sols);
-  draw_button prev_button "< Prev";
-  draw_button next_button "Next >"
+  draw_button prev_button;
+  draw_button next_button
 ;;
 
-(* The UI state -- which solution is displayed -- travels as the argument of
-   a tail-recursive event loop, exactly like the search state in the lib. *)
+(* The UI is a small state machine written as three mutually recursive
+   functions: [loop] redraws and idles, [idle] waits for input without
+   redrawing, and [held] is the pressed-button phase. The displayed solution
+   index travels as an argument -- no mutable state. *)
 let rec loop n sols idx =
   draw_state n sols idx;
+  idle n sols idx
+
+and idle n sols idx =
   let e = wait_next_event [ Button_down; Key_pressed ] in
   let total = Array.length sols in
   let next = (idx + 1) mod total
   and prev = (idx + total - 1) mod total in
   if e.button
   then
-    if inside prev_button e.mouse_x e.mouse_y
-    then loop n sols prev
-    else if inside next_button e.mouse_x e.mouse_y
-    then loop n sols next
-    else loop n sols idx
+    if inside prev_button.rect e.mouse_x e.mouse_y
+    then held n sols idx prev_button prev
+    else if inside next_button.rect e.mouse_x e.mouse_y
+    then held n sols idx next_button next
+    else idle n sols idx
   else (
     match e.key with
     | 'n' -> loop n sols next
     | 'p' -> loop n sols prev
     | 'q' -> ()
-    | _ -> loop n sols idx)
+    | _ -> idle n sols idx)
+
+(* [b] stays drawn pressed until the mouse button is released; the click
+   fires (jumping to solution [target]) only if the release lands inside
+   [b] -- releasing elsewhere cancels, like a native button. *)
+and held n sols idx b target =
+  draw_button ~pressed:true b;
+  let e = wait_next_event [ Button_up ] in
+  if inside b.rect e.mouse_x e.mouse_y then loop n sols target else loop n sols idx
 ;;
 
 let interactive n =
