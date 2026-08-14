@@ -1,0 +1,2 @@
+# ocamlpractice
+Practices of OCaml
