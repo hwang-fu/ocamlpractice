@@ -11,7 +11,7 @@ let scale = 300.
 let default_a = -0.5
 let default_b = 0.
 
-(* Escape-time coloring (exercise 2.3): interpolate between a dark blue for
+(* Escape-time coloring: interpolate between a dark blue for
    fast escapes (far from the set) and a warm yellow for slow ones (hugging
    the boundary). The square root stretches the low escape times, where most
    pixels live, over more of the gradient. *)
