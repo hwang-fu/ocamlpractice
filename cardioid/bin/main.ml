@@ -35,16 +35,9 @@ let draw_axes ~center_x ~center_y =
   draw_string "y"
 ;;
 
-let run a =
-  open_graph (Printf.sprintf " %dx%d" width height);
-  set_window_title "Cardioid";
-  let center_x = width / 2 in
-  (* centering the y-span [-2a, 0.25a] puts the origin at height/2 + 7a/8 *)
-  let center_y = truncate ((float height /. 2.) +. (0.875 *. a)) in
-  let to_pixel (x, y) = center_x + truncate x, center_y + truncate y in
-  draw_axes ~center_x ~center_y;
-  set_color black;
-  set_line_width 3;
+(* Animate the cardioid of radius [a], mapping curve coordinates to window
+   pixels with [to_pixel]. Assumes pen color and line width are already set. *)
+let draw_cardioid ~to_pixel a =
   let x0, y0 = to_pixel (Cardioid.point a 0.) in
   moveto x0 y0;
   for i = 1 to steps do
@@ -55,7 +48,20 @@ let run a =
        becomes visible before we sleep. *)
     synchronize ();
     Unix.sleepf delay
-  done;
+  done
+;;
+
+let run a =
+  open_graph (Printf.sprintf " %dx%d" width height);
+  set_window_title "Cardioid";
+  let center_x = width / 2 in
+  (* centering the y-span [-2a, 0.25a] puts the origin at height/2 + 7a/8 *)
+  let center_y = truncate ((float height /. 2.) +. (0.875 *. a)) in
+  let to_pixel (x, y) = center_x + truncate x, center_y + truncate y in
+  draw_axes ~center_x ~center_y;
+  set_color black;
+  set_line_width 3;
+  draw_cardioid ~to_pixel a;
   try ignore (read_key ()) with
   | Graphic_failure _ -> ()
 ;;
