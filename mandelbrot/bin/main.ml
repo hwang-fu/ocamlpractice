@@ -4,17 +4,12 @@ let width = 1200
 let height = 800
 let k = 100
 
-(* Viewport on the complex plane: 300 pixels per unit, centered on (-0.5, 0),
-   so the window shows [-2.5, 1.5] x [-4/3, 4/3] -- the set spans roughly
-   [-2, 0.5] x [-1.12, 1.12] and sits comfortably inside. *)
+(* Viewport: 300 pixels per unit around a configurable center of the complex
+   plane. The default (-0.5, 0) frames the whole set, which spans roughly
+   [-2, 0.5] x [-1.12, 1.12]. *)
 let scale = 300.
-let center_a = -0.5
-let center_b = 0.
-
-let to_plane w h =
-  ( center_a +. ((float w -. (float width /. 2.)) /. scale)
-  , center_b +. ((float h -. (float height /. 2.)) /. scale) )
-;;
+let default_a = -0.5
+let default_b = 0.
 
 (* Escape-time coloring (exercise 2.3): interpolate between a dark blue for
    fast escapes (far from the set) and a warm yellow for slow ones (hugging
@@ -26,7 +21,9 @@ let color_of_escape n =
   rgb (blend 15 255) (blend 15 220) (blend 80 100)
 ;;
 
-let draw () =
+(* Paint every pixel, mapping window coordinates to the plane with
+   [to_plane]. *)
+let draw ~to_plane =
   for w = 0 to width - 1 do
     for h = 0 to height - 1 do
       let a, b = to_plane w h in
@@ -38,10 +35,28 @@ let draw () =
   done
 ;;
 
-let () =
+let run center_a center_b =
   open_graph (Printf.sprintf " %dx%d" width height);
   set_window_title "Mandelbrot set";
-  draw ();
+  let to_plane w h =
+    ( center_a +. ((float w -. (float width /. 2.)) /. scale)
+    , center_b +. ((float h -. (float height /. 2.)) /. scale) )
+  in
+  draw ~to_plane;
   try ignore (read_key ()) with
   | Graphic_failure _ -> ()
+;;
+
+let () =
+  match Sys.argv with
+  | [| _ |] -> run default_a default_b
+  | [| _; a; b |] ->
+    (match float_of_string_opt a, float_of_string_opt b with
+     | Some a, Some b -> run a b
+     | _ ->
+       Printf.eprintf "error: expected two floats, got %S and %S\n" a b;
+       exit 1)
+  | _ ->
+    Printf.eprintf "usage: %s [center_a center_b]\n" Sys.argv.(0);
+    exit 1
 ;;
