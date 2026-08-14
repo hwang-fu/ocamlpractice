@@ -24,7 +24,7 @@ let draw_polyline = function
     List.iter (fun (x, y) -> lineto (truncate x) (truncate y)) rest
 ;;
 
-let run_with_depth depth =
+let run ?(depth = default_depth) () =
   open_graph (Printf.sprintf " %dx%d" window_width window_height);
   set_window_title "Koch snowflake";
   let cx = float window_width /. 2.
@@ -43,5 +43,3 @@ let run_with_depth depth =
   try ignore (read_key ()) with
   | Graphic_failure _ -> ()
 ;;
-
-let run_with_default_depth () = run_with_depth default_depth
