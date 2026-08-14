@@ -7,7 +7,7 @@ let draw_polyline = function
     List.iter (fun (x, y) -> lineto (truncate x) (truncate y)) rest
 ;;
 
-let run depth =
+let run_with_depth d =
   open_graph (Printf.sprintf " %dx%d" Render.window_width Render.window_height);
   set_window_title "Koch snowflake";
   let cx = float Render.window_width /. 2.
@@ -21,18 +21,20 @@ let run depth =
   in
   set_line_width Render.line_width;
   for k = 0 to 2 do
-    draw_polyline (Koch_snowflake.koch depth (vertex k) (vertex ((k + 1) mod 3)))
+    draw_polyline (Koch_snowflake.koch d (vertex k) (vertex ((k + 1) mod 3)))
   done;
   try ignore (read_key ()) with
   | Graphic_failure _ -> ()
 ;;
 
+let run_with_default_depth () = run_with_depth Render.default_depth
+
 let () =
   match Sys.argv with
-  | [| _ |] -> run Render.default_depth
+  | [| _ |] -> run_with_default_depth ()
   | [| _; arg |] ->
     (match int_of_string_opt arg with
-     | Some d when Render.min_depth <= d && d <= Render.max_depth -> run d
+     | Some d when Render.min_depth <= d && d <= Render.max_depth -> run_with_depth d
      | Some _ | None ->
        Printf.eprintf
          "error: expected a depth in [%d, %d], got %S\n"
