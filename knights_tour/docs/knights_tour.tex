@@ -140,7 +140,8 @@ the future only weakly, so whole subtrees are explored in vain.
 The classical remedy (1823) rests on one number. The \emph{onward count}
 of a square: presume the knight stood there --- to how many squares could
 it jump (on the board, not yet visited)? Warnsdorff's rule: \emph{always
-jump to the candidate with the smallest onward count.}
+jump to the candidate with the smallest onward count; ties are broken
+arbitrarily} (our program: first in its fixed move order).
 
 Here is the rule at work on an empty $6 \times 6$ board; each candidate
 square is labeled with its onward count:
