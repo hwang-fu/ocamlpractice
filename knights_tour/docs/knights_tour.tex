@@ -137,12 +137,10 @@ the future only weakly, so whole subtrees are explored in vain.
 
 \subsection{Warnsdorff's rule}
 
-The classical remedy (1823) is a greedy ordering built on one question.
-The knight ponders its next move; for each candidate square it asks:
-\emph{if I jump there, how many legal moves will I have left afterwards
-(not counting squares already visited)?} Call that number the candidate's
-\emph{onward count}. Warnsdorff's rule is then simply: \emph{always jump
-to the candidate with the smallest onward count.}
+The classical remedy (1823) rests on one number. The \emph{onward count}
+of a square: presume the knight stood there --- to how many squares could
+it jump (on the board, not yet visited)? Warnsdorff's rule: \emph{always
+jump to the candidate with the smallest onward count.}
 
 Here is the rule at work on an empty $6 \times 6$ board; each candidate
 square is labeled with its onward count:
