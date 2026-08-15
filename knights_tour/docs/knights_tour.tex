@@ -1,0 +1,238 @@
+% Compile with: lualatex knights_tour.tex
+\documentclass[11pt]{article}
+
+\usepackage{amsmath, amssymb}
+\usepackage{tikz}
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage[colorlinks=true, urlcolor=blue]{hyperref}
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[L]{\small Junzhe Wang ~\textperiodcentered~
+  \href{mailto:junzhe.wang2002@gmail.com}{\texttt{junzhe.wang2002@gmail.com}}}
+\fancyfoot[R]{\small Last edited: \today\ ~\textperiodcentered~ p.\,\thepage}
+
+\title{The Knight's Tour}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+
+\section{The knight and its graph}
+
+A knight on square $(x, y)$ may jump to any of the eight squares
+\begin{equation}
+  (x \pm 1, y \pm 2), \qquad (x \pm 2, y \pm 1)
+\end{equation}
+that lie on the board. Abstracting the chessboard away, the $N \times N$
+\emph{knight graph} has one vertex per square and one edge per legal jump;
+everything below is graph theory in chess clothing.
+
+\begin{center}
+\begin{tikzpicture}[scale=0.72]
+  \foreach \x in {0,...,4}
+    \foreach \y in {0,...,4} {
+      \pgfmathparse{mod(\x+\y,2) == 0 ? "white" : "black!15"}
+      \edef\c{\pgfmathresult}
+      \fill[\c] (\x, \y) rectangle ++(1, 1);
+    }
+  \draw (0, 0) rectangle (5, 5);
+  \node at (2.5, 2.5) {\LARGE\bfseries N};
+  \foreach \dx/\dy in {1/2, 2/1, 2/-1, 1/-2, -1/-2, -2/-1, -2/1, -1/2}
+    \fill[red!70] (2.5 + \dx, 2.5 + \dy) circle (5pt);
+  \draw[->, thick, blue!60] (2.5, 2.5) -- (2.5, 4.5) -- (3.35, 4.5);
+  \draw[->, thick, blue!60] (2.5, 2.5) -- (4.5, 2.5) -- (4.5, 1.65);
+\end{tikzpicture}
+
+\smallskip
+The eight knight moves; two are drawn as their L shapes.
+\end{center}
+
+\section{Open and closed tours}
+
+A \emph{tour} visits every square of the board exactly once.
+\begin{itemize}
+  \item An \textbf{open tour} may end anywhere: a \emph{Hamiltonian path} of
+    the knight graph.
+  \item A \textbf{closed tour} (or re-entrant tour) ends a single knight's
+    move away from its starting square, so the knight could go round
+    forever: a \emph{Hamiltonian cycle}.
+\end{itemize}
+
+Existence is completely settled on square boards:
+\begin{itemize}
+  \item Open tours exist exactly for $N = 1$ and $N \geq 5$. There is no
+    tour on $2 \times 2$ or $3 \times 3$ (on the latter, the center square
+    has no knight move at all), and --- less obviously --- none on
+    $4 \times 4$ either.
+  \item Closed tours exist exactly for even $N \geq 6$.
+\end{itemize}
+
+The parity half of the closed-tour statement has a one-line proof worth
+savoring. Every knight move changes square color, so any walk alternates
+black and white. A closed tour is a cycle through all $N^2$ squares using
+each exactly once; alternation around a cycle forces equally many squares
+of each color, hence $N^2$ even, hence $N$ even. For odd $N$ the board has
+one color in excess and no closed tour can exist --- an impossibility
+established without examining a single candidate tour, just from an
+invariant every move preserves.
+
+\section{Algorithms}
+
+\subsection{Backtracking}
+
+The direct search extends a partial path square by square: from the current
+square, try each unvisited neighbor in turn, recurse, and undo on failure;
+success is a path of length $N^2$.
+
+\begin{center}
+\begin{tikzpicture}[
+    dot/.style={circle, draw, fill=black!70, inner sep=2pt},
+    dead/.style={circle, draw=red!70, fill=red!20, inner sep=2pt},
+    win/.style={circle, draw=green!60!black, fill=green!25, inner sep=2pt},
+    bt/.style={->, dashed, red!70, thick}
+  ]
+  \node[dot] (r) at (0, 0) {};
+  \node[dot] (a) at (-2.4, -1.3) {};
+  \node[dot] (b) at (2.4, -1.3) {};
+  \node[dot] (a1) at (-3.7, -2.6) {};
+  \node[dot] (a2) at (-1.1, -2.6) {};
+  \node[dead] (x1) at (-3.7, -3.9) {};
+  \node[dead] (x2) at (-1.1, -3.9) {};
+  \node[dot] (b1) at (2.4, -2.6) {};
+  \node[win] (w) at (2.4, -3.9) {};
+  \draw[->] (r) -- (a) node[midway, below right] {\tiny (1)};
+  \draw[->] (a) -- (a1) node[midway, below right] {\tiny (2)};
+  \draw[->] (a1) -- (x1) node[midway, right] {\tiny (3)};
+  \draw[bt] (x1) to[bend left=50] node[midway, left, red!70] {\tiny (4)} (a1);
+  \draw[bt] (a1) to[bend left=50] node[midway, above left, red!70] {\tiny (5)} (a);
+  \draw[->] (a) -- (a2) node[midway, below left] {\tiny (6)};
+  \draw[->] (a2) -- (x2) node[midway, left] {\tiny (7)};
+  \draw[bt] (x2) to[bend right=50] node[midway, right, red!70] {\tiny (8)} (a2);
+  \draw[bt] (a2) to[bend right=50] node[midway, right, red!70] {\tiny (9)} (a);
+  \draw[bt] (a) to[bend left=55] node[midway, above left, red!70] {\tiny (10)} (r);
+  \draw[->] (r) -- (b) node[midway, above right] {\tiny (11)};
+  \draw[->] (b) -- (b1) node[midway, right] {\tiny (12)};
+  \draw[->] (b1) -- (w) node[midway, right] {\tiny (13)};
+  \node[right] at (2.8, -3.9) {\small tour found};
+  \node[red!70, below] at (-1.1, -4.15) {\small dead end};
+\end{tikzpicture}
+
+\smallskip
+The search tree, edges numbered in traversal order: solid arrows descend,
+dashed red arrows undo after a dead end.
+\end{center}
+
+This always works in principle --- it is exhaustive --- but the knight
+graph is generous (up to eight choices per step, path length $N^2$), and
+from an unlucky start the tree above can grow astronomically many red
+leaves before its first green one. Unlike the queens problem, where each
+placement prunes entire columns and diagonals, a knight move constrains
+the future only weakly, so whole subtrees are explored in vain.
+
+\subsection{Warnsdorff's rule}
+
+The classical remedy (1823) rests on one number. The \emph{onward count}
+of a square: presume the knight stood there --- to how many squares could
+it jump (on the board, not yet visited)? Warnsdorff's rule: \emph{always
+jump to the candidate with the smallest onward count; ties are broken
+arbitrarily} (our program: first in its fixed move order).
+
+Here is the rule at work on an empty $6 \times 6$ board; each candidate
+square is labeled with its onward count:
+
+\begin{center}
+\begin{tikzpicture}[scale=0.78]
+  \foreach \x in {0,...,5}
+    \foreach \y in {0,...,5} {
+      \pgfmathparse{mod(\x+\y,2) == 0 ? "white" : "black!12"}
+      \edef\c{\pgfmathresult}
+      \fill[\c] (\x, \y) rectangle ++(1, 1);
+    }
+  \draw (0, 0) rectangle (6, 6);
+  \node at (2.5, 2.5) {\LARGE\bfseries N};
+  % onward-move counts of each candidate, computed on the empty board
+  \foreach \x/\y/\d in {3/4/5, 4/3/5, 4/1/3, 3/0/3, 0/3/3, 1/4/3}
+    \node[circle, draw=red!70, fill=red!15, inner sep=1.5pt]
+      at (\x + 0.5, \y + 0.5) {\small $\d$};
+  \foreach \x/\y/\d in {1/0/2, 0/1/2}
+    \node[circle, draw=green!60!black, fill=green!25, inner sep=1.5pt]
+      at (\x + 0.5, \y + 0.5) {\small $\d$};
+\end{tikzpicture}
+
+\smallskip
+Warnsdorff picks a green square, whose onward count 2 is smallest.
+\end{center}
+
+Where does any label come from? Always the same arithmetic: a knight has
+\emph{eight} potential targets; strike out those that fall off the board
+and those already visited; the survivors are the onward count. Here is
+that arithmetic for the bottom-left green $2$, with the knight moved onto
+it and all eight of its targets drawn --- including the five that land
+outside the board:
+
+\begin{center}
+\begin{tikzpicture}[scale=0.78]
+  \foreach \x in {0,...,5}
+    \foreach \y in {0,...,5} {
+      \pgfmathparse{mod(\x+\y,2) == 0 ? "white" : "black!12"}
+      \edef\c{\pgfmathresult}
+      \fill[\c] (\x, \y) rectangle ++(1, 1);
+    }
+  \draw (0, 0) rectangle (6, 6);
+  \node at (1.5, 0.5) {\LARGE\bfseries N};
+  % the previous square, a knight's move away but already visited
+  \node[black!45] at (2.5, 2.5) {\large$\times$};
+  \node[black!45, below] at (2.5, 2.35) {\scriptsize visited};
+  % the two surviving targets
+  \foreach \x/\y in {0/2, 3/1}
+    \node[circle, draw=red!70, fill=red!15, inner sep=2.5pt]
+      at (\x + 0.5, \y + 0.5) {};
+  % the five targets that fall off the board
+  \foreach \x/\y in {2/-2, 0/-2, 3/-1, -1/1, -1/-1}
+    \node[gray!70] at (\x + 0.5, \y + 0.5) {\small$\times$};
+  \draw[dashed, gray!60] (-1, -2) rectangle (6, 0);
+  \draw[dashed, gray!60] (-1, 0) rectangle (0, 2);
+\end{tikzpicture}
+
+\smallskip
+The green square's eight targets: five (gray $\times$) are off the board,
+one is already visited, and the two red squares survive ---
+$8 - 5 - 1 = 2$, the label it carried in the previous figure. Every other
+label follows from the same subtraction.
+\end{center}
+
+The intuition is a rescue principle: the squares near the corner have the
+fewest ways in and out, so they are the ones in danger of becoming
+unreachable islands --- visit them while it is still possible, and leave
+the well-connected center for later. With this ordering the very first
+descent of the search tree almost always runs straight to a green leaf:
+backtracking in name, linear in practice.
+
+Two honest caveats, one of them visible above: the two green squares
+\emph{tie} at count 2, and ties must be broken somehow --- on larger
+boards a poor tie-breaking rule can strand the pure heuristic in a dead
+end. Keeping the backtracking machinery underneath restores certainty at
+no cost when the heuristic behaves. And greedy success is empirical, not
+guaranteed: the rule is a heuristic, not a theorem.
+
+\section{From mathematics to program}
+
+The program searches for \emph{closed} tours. It represents the board as a
+visited matrix plus the trail of moves so far; the eight jump offsets are a
+constant list. A candidate is accepted when the path covers all $N^2$
+squares \emph{and} its last square is a knight's move from the first ---
+the extra closure test is the only difference from an open-tour search.
+The result is an \emph{option}: \texttt{Some tour} on first success ---
+there is no point enumerating further --- or \texttt{None}, which for odd
+$N$ or $N < 6$ is not a failure of the search but a fact of mathematics.
+Sorting candidate moves by onward count turns the naive search into
+Warnsdorff's; timing both against each other makes the difference
+measurable rather than anecdotal.
+
+\end{document}

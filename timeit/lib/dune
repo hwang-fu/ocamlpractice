@@ -1,3 +1,4 @@
 (library
  (name timeit)
+ (public_name timeit)
  (libraries unix))

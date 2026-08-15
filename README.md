@@ -139,6 +139,20 @@ sum of 1..100000000      0.036 s
 sum of 1..1000000000     0.223 s
 ```
 
+### knights_tour
+
+Finds a *closed* knight's tour (a Hamiltonian cycle of the knight graph)
+and animates it with a flying arrow; no closed tour exists on odd boards
+or below 6x6, and the program says so. See `docs/` for the mathematics.
+
+```console
+$ dune exec bin/main.exe -- 8     # animate a closed tour, even n in [6, 20]
+$ dune exec bin/main.exe -- -c    # time naive vs warnsdorff ordering (~1 min)
+```
+
+Depends on the `timeit` quiz as a library, pinned into the local switch by
+`make env` (`opam pin add timeit ./timeit`).
+
 ## Notes
 
 - Some quizzes (`cardioid`, `mandelbrot`, `koch_snowflake`) carry a short

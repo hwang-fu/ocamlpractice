@@ -1,0 +1,14 @@
+opam-version: "2.0"
+synopsis: "CPU-time measurement of a thunk"
+description:
+  "Tiny helper measuring the user-space CPU time a function consumes. Pinned locally by sibling quiz projects; not meant for publication."
+maintainer: "Junzhe Wang <junzhe.hwangfu@gmail.com>"
+authors: "Junzhe Wang"
+license: "MIT"
+depends: [
+  "ocaml" {>= "5.0"}
+  "dune" {>= "3.23"}
+]
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+]
