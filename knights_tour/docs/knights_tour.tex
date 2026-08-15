@@ -98,34 +98,34 @@ success is a path of length $N^2$.
     bt/.style={->, dashed, red!70, thick}
   ]
   \node[dot] (r) at (0, 0) {};
-  \node[dot] (a) at (-1.6, -1) {};
-  \node[dot] (b) at (1.6, -1) {};
-  \node[dot] (a1) at (-2.4, -2) {};
-  \node[dot] (a2) at (-0.8, -2) {};
-  \node[dead] (x1) at (-2.4, -3) {};
-  \node[dead] (x2) at (-0.8, -3) {};
-  \node[dot] (b1) at (1.6, -2) {};
-  \node[win] (w) at (1.6, -3) {};
-  \draw[->] (r) -- (a);
-  \draw[->] (a) -- (a1);
-  \draw[->] (a1) -- (x1);
-  \draw[->] (a) -- (a2);
-  \draw[->] (a2) -- (x2);
-  \draw[->] (r) -- (b);
-  \draw[->] (b) -- (b1);
-  \draw[->] (b1) -- (w);
-  \draw[bt] (x1) to[bend left=40] (a1);
-  \draw[bt] (a1) to[bend left=40] (a);
-  \draw[bt] (x2) to[bend left=40] (a2);
-  \draw[bt] (a2) to[bend right=40] (a);
-  \draw[bt] (a) to[bend left=40] (r);
-  \node[red!70, left] at (-3.0, -2.4) {\small backtrack};
-  \node[right] at (2.0, -3) {\small tour found};
-  \node[red!70, right] at (-0.4, -3) {\small dead end};
+  \node[dot] (a) at (-2.4, -1.3) {};
+  \node[dot] (b) at (2.4, -1.3) {};
+  \node[dot] (a1) at (-3.7, -2.6) {};
+  \node[dot] (a2) at (-1.1, -2.6) {};
+  \node[dead] (x1) at (-3.7, -3.9) {};
+  \node[dead] (x2) at (-1.1, -3.9) {};
+  \node[dot] (b1) at (2.4, -2.6) {};
+  \node[win] (w) at (2.4, -3.9) {};
+  \draw[->] (r) -- (a) node[midway, below right] {\tiny (1)};
+  \draw[->] (a) -- (a1) node[midway, below right] {\tiny (2)};
+  \draw[->] (a1) -- (x1) node[midway, right] {\tiny (3)};
+  \draw[bt] (x1) to[bend left=50] node[midway, left, red!70] {\tiny (4)} (a1);
+  \draw[bt] (a1) to[bend left=50] node[midway, above left, red!70] {\tiny (5)} (a);
+  \draw[->] (a) -- (a2) node[midway, below left] {\tiny (6)};
+  \draw[->] (a2) -- (x2) node[midway, left] {\tiny (7)};
+  \draw[bt] (x2) to[bend right=50] node[midway, right, red!70] {\tiny (8)} (a2);
+  \draw[bt] (a2) to[bend right=50] node[midway, right, red!70] {\tiny (9)} (a);
+  \draw[bt] (a) to[bend left=55] node[midway, above left, red!70] {\tiny (10)} (r);
+  \draw[->] (r) -- (b) node[midway, above right] {\tiny (11)};
+  \draw[->] (b) -- (b1) node[midway, right] {\tiny (12)};
+  \draw[->] (b1) -- (w) node[midway, right] {\tiny (13)};
+  \node[right] at (2.8, -3.9) {\small tour found};
+  \node[red!70, below] at (-1.1, -4.15) {\small dead end};
 \end{tikzpicture}
 
 \smallskip
-The search tree: descend left to right, undo (dashed) on every dead end.
+The search tree, edges numbered in traversal order: solid arrows descend,
+dashed red arrows undo after a dead end.
 \end{center}
 
 This always works in principle --- it is exhaustive --- but the knight
