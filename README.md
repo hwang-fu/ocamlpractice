@@ -98,6 +98,28 @@ $ dune exec bin/main.exe            # depth 4
 $ dune exec bin/main.exe -- 6      # lacier
 ```
 
+### hanoi
+
+Animates the classic Tower of Hanoi solution for five discs (31 moves, one
+per 0.9 s). No arguments; any key closes once the tower has moved.
+
+```console
+$ dune exec bin/main.exe
+```
+
+### timeit
+
+`Timeit.time` measures the CPU time (not wall-clock time) a function
+consumes. The demo times summation loops of growing size to show
+near-linear scaling; no arguments.
+
+```console
+$ dune exec bin/main.exe
+sum of 1..10000000       0.005 s
+sum of 1..100000000      0.036 s
+sum of 1..1000000000     0.223 s
+```
+
 ## Notes
 
 - Some quizzes (`cardioid`, `mandelbrot`, `koch_snowflake`) carry a short
