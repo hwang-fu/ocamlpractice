@@ -137,10 +137,15 @@ the future only weakly, so whole subtrees are explored in vain.
 
 \subsection{Warnsdorff's rule}
 
-The classical remedy (1823) is a greedy ordering: \emph{always jump to the
-unvisited square that itself has the fewest unvisited onward moves}. Here
-is the rule at work on an empty $6 \times 6$ board, every candidate
-labeled with its count of onward moves:
+The classical remedy (1823) is a greedy ordering built on one question.
+The knight ponders its next move; for each candidate square it asks:
+\emph{if I jump there, how many legal moves will I have left afterwards
+(not counting squares already visited)?} Call that number the candidate's
+\emph{onward count}. Warnsdorff's rule is then simply: \emph{always jump
+to the candidate with the smallest onward count.}
+
+Here is the rule at work on an empty $6 \times 6$ board; each candidate
+square is labeled with its onward count:
 
 \begin{center}
 \begin{tikzpicture}[scale=0.78]
@@ -162,7 +167,34 @@ labeled with its count of onward moves:
 \end{tikzpicture}
 
 \smallskip
-Warnsdorff picks a green square: only two ways onward from there.
+Warnsdorff picks a green square, whose onward count 2 is smallest.
+\end{center}
+
+To see where a label comes from, verify the bottom-left green $2$ by
+actually making that jump. With the knight there, exactly two squares
+remain reachable --- the starting square, although a knight's move away,
+is already visited and no longer counts:
+
+\begin{center}
+\begin{tikzpicture}[scale=0.78]
+  \foreach \x in {0,...,5}
+    \foreach \y in {0,...,5} {
+      \pgfmathparse{mod(\x+\y,2) == 0 ? "white" : "black!12"}
+      \edef\c{\pgfmathresult}
+      \fill[\c] (\x, \y) rectangle ++(1, 1);
+    }
+  \draw (0, 0) rectangle (6, 6);
+  \node at (1.5, 0.5) {\LARGE\bfseries N};
+  \node[black!45] at (2.5, 2.5) {\large$\times$};
+  \node[black!45, below] at (2.5, 2.35) {\scriptsize visited};
+  \foreach \x/\y in {0/2, 3/1}
+    \node[circle, draw=red!70, fill=red!15, inner sep=2.5pt]
+      at (\x + 0.5, \y + 0.5) {};
+\end{tikzpicture}
+
+\smallskip
+Checking the green square: after the jump, only the two red squares are
+reachable --- its onward count really is 2.
 \end{center}
 
 The intuition is a rescue principle: the squares near the corner have the
@@ -189,7 +221,7 @@ the extra closure test is the only difference from an open-tour search.
 The result is an \emph{option}: \texttt{Some tour} on first success ---
 there is no point enumerating further --- or \texttt{None}, which for odd
 $N$ or $N < 6$ is not a failure of the search but a fact of mathematics.
-Sorting candidate moves by onward degree turns the naive search into
+Sorting candidate moves by onward count turns the naive search into
 Warnsdorff's; timing both against each other makes the difference
 measurable rather than anecdotal.
 
