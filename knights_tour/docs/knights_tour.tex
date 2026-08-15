@@ -170,10 +170,12 @@ square is labeled with its onward count:
 Warnsdorff picks a green square, whose onward count 2 is smallest.
 \end{center}
 
-To see where a label comes from, verify the bottom-left green $2$ by
-actually making that jump. With the knight there, exactly two squares
-remain reachable --- the starting square, although a knight's move away,
-is already visited and no longer counts:
+Where does any label come from? Always the same arithmetic: a knight has
+\emph{eight} potential targets; strike out those that fall off the board
+and those already visited; the survivors are the onward count. Here is
+that arithmetic for the bottom-left green $2$, with the knight moved onto
+it and all eight of its targets drawn --- including the five that land
+outside the board:
 
 \begin{center}
 \begin{tikzpicture}[scale=0.78]
@@ -185,16 +187,25 @@ is already visited and no longer counts:
     }
   \draw (0, 0) rectangle (6, 6);
   \node at (1.5, 0.5) {\LARGE\bfseries N};
+  % the previous square, a knight's move away but already visited
   \node[black!45] at (2.5, 2.5) {\large$\times$};
   \node[black!45, below] at (2.5, 2.35) {\scriptsize visited};
+  % the two surviving targets
   \foreach \x/\y in {0/2, 3/1}
     \node[circle, draw=red!70, fill=red!15, inner sep=2.5pt]
       at (\x + 0.5, \y + 0.5) {};
+  % the five targets that fall off the board
+  \foreach \x/\y in {2/-2, 0/-2, 3/-1, -1/1, -1/-1}
+    \node[gray!70] at (\x + 0.5, \y + 0.5) {\small$\times$};
+  \draw[dashed, gray!60] (-1, -2) rectangle (6, 0);
+  \draw[dashed, gray!60] (-1, 0) rectangle (0, 2);
 \end{tikzpicture}
 
 \smallskip
-Checking the green square: after the jump, only the two red squares are
-reachable --- its onward count really is 2.
+The green square's eight targets: five (gray $\times$) are off the board,
+one is already visited, and the two red squares survive ---
+$8 - 5 - 1 = 2$, the label it carried in the previous figure. Every other
+label follows from the same subtraction.
 \end{center}
 
 The intuition is a rescue principle: the squares near the corner have the
