@@ -6,10 +6,25 @@ quiz builds, tests, and runs independently.
 
 ## Requirements
 
-- OCaml (developed on 5.4) and dune (3.x) via opam
-- The `graphics` opam package plus an X11 display, for the drawing quizzes
-- `ocamlformat` (Jane Street profile; each project pins its version)
+- opam (2.x) — everything else is pinned by the repo, see below
+- An X11 display, for the drawing quizzes
 - LuaLaTeX (TeX Live), only to rebuild the PDF notes under `*/docs/`
+
+## Reproducible environment
+
+The exact toolchain (OCaml 5.4.0, dune, `graphics` 5.2.0, `ocamlformat`
+0.28.1) is declared in `ocamlpractice.opam`. Build the repo-local opam
+switch once with:
+
+```console
+make env          # first run compiles the compiler: several minutes
+eval $(opam env)  # select the local switch in the current shell
+```
+
+This creates `_opam/` at the repo root (gitignored). opam's shell hook, if
+enabled, selects the switch automatically whenever you are inside the repo;
+otherwise re-run `eval $(opam env)` per shell. Future upgrades of the
+global opam world then cannot break these quizzes.
 
 ## Building and testing
 

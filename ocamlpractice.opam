@@ -1,0 +1,13 @@
+opam-version: "2.0"
+synopsis: "OCaml practice quizzes"
+description:
+  "Pinned toolchain for the quiz projects in this repository. Not meant to be published; it exists so `make env` can rebuild the exact local switch."
+maintainer: "Junzhe Wang <junzhe.wang2002@gmail.com>"
+authors: "Junzhe Wang"
+license: "MIT"
+depends: [
+  "ocaml" {= "5.4.0"}
+  "dune" {>= "3.23"}
+  "graphics" {= "5.2.0"}
+  "ocamlformat" {= "0.28.1"}
+]
