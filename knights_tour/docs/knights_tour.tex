@@ -221,6 +221,26 @@ end. Keeping the backtracking machinery underneath restores certainty at
 no cost when the heuristic behaves. And greedy success is empirical, not
 guaranteed: the rule is a heuristic, not a theorem.
 
+\paragraph{The closed-tour twist.}
+The praise above is earned on \emph{open} tours, where the rule asks
+nothing of the final square. A closed tour also demands that the last
+square rejoin the first, and a greedy descent satisfies that only by luck.
+Measurement was blunt about it: Warnsdorff-ordered \emph{backtracking}
+solves $6 \times 6$ in seconds but churns indefinitely from $8 \times 8$
+up --- a prefix doomed not to close hides its failure astronomically deep
+in the tree, and backtracking near the leaves never repairs it. The
+effective remedy inverts the strategy: \emph{restart} instead of persist
+--- run the pure greedy descent with random tie-breaking, and when it
+fails to close, throw the path away and try afresh. Attempts are near
+linear and each closes with modest probability, so a tour arrives within
+milliseconds to seconds for $8 \leq n \leq 20$. The smallest board is the
+exception in the other direction: on $6 \times 6$ greedy descents
+essentially never close, while the ordered exhaustive search is quick ---
+so the program uses each regime where it wins. The general lesson is
+worth keeping: a heuristic tuned for one goal (cover the board) does not
+automatically serve a stricter one (cover it \emph{and} return home), and
+in heavy-tailed searches, restarting often beats persisting.
+
 \section{From mathematics to program}
 
 The program searches for \emph{closed} tours. It represents the board as a
