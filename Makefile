@@ -17,6 +17,7 @@ all: build
 # First run compiles the OCaml compiler: expect several minutes.
 env:
 	opam switch create . 5.4.0 --deps-only --yes || opam install . --deps-only --yes
+	opam pin add --yes timeit ./timeit
 
 # $(call run_in,<command>): prompt for a quiz name; empty = run in all.
 define run_in
