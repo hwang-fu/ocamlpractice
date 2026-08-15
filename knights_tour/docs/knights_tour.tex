@@ -88,29 +88,96 @@ invariant every move preserves.
 
 The direct search extends a partial path square by square: from the current
 square, try each unvisited neighbor in turn, recurse, and undo on failure;
-success is a path of length $N^2$. This always works in principle --- it is
-exhaustive --- but the knight graph is generous (up to eight choices per
-step, path length $N^2$), and from an unlucky starting square the search
-can wander through astronomically many dead ends before its first success.
-Unlike the queens problem, where each placement prunes entire columns and
-diagonals, a knight move constrains the future only weakly.
+success is a path of length $N^2$.
+
+\begin{center}
+\begin{tikzpicture}[
+    dot/.style={circle, draw, fill=black!70, inner sep=2pt},
+    dead/.style={circle, draw=red!70, fill=red!20, inner sep=2pt},
+    win/.style={circle, draw=green!60!black, fill=green!25, inner sep=2pt},
+    bt/.style={->, dashed, red!70, thick}
+  ]
+  \node[dot] (r) at (0, 0) {};
+  \node[dot] (a) at (-1.6, -1) {};
+  \node[dot] (b) at (1.6, -1) {};
+  \node[dot] (a1) at (-2.4, -2) {};
+  \node[dot] (a2) at (-0.8, -2) {};
+  \node[dead] (x1) at (-2.4, -3) {};
+  \node[dead] (x2) at (-0.8, -3) {};
+  \node[dot] (b1) at (1.6, -2) {};
+  \node[win] (w) at (1.6, -3) {};
+  \draw[->] (r) -- (a);
+  \draw[->] (a) -- (a1);
+  \draw[->] (a1) -- (x1);
+  \draw[->] (a) -- (a2);
+  \draw[->] (a2) -- (x2);
+  \draw[->] (r) -- (b);
+  \draw[->] (b) -- (b1);
+  \draw[->] (b1) -- (w);
+  \draw[bt] (x1) to[bend left=40] (a1);
+  \draw[bt] (a1) to[bend left=40] (a);
+  \draw[bt] (x2) to[bend left=40] (a2);
+  \draw[bt] (a2) to[bend right=40] (a);
+  \draw[bt] (a) to[bend left=40] (r);
+  \node[red!70, left] at (-3.0, -2.4) {\small backtrack};
+  \node[right] at (2.0, -3) {\small tour found};
+  \node[red!70, right] at (-0.4, -3) {\small dead end};
+\end{tikzpicture}
+
+\smallskip
+The search tree: descend left to right, undo (dashed) on every dead end.
+\end{center}
+
+This always works in principle --- it is exhaustive --- but the knight
+graph is generous (up to eight choices per step, path length $N^2$), and
+from an unlucky start the tree above can grow astronomically many red
+leaves before its first green one. Unlike the queens problem, where each
+placement prunes entire columns and diagonals, a knight move constrains
+the future only weakly, so whole subtrees are explored in vain.
 
 \subsection{Warnsdorff's rule}
 
 The classical remedy (1823) is a greedy ordering: \emph{always jump to the
-unvisited square that itself has the fewest unvisited onward moves}. The
-intuition is a scheduling principle: squares with few remaining accesses
-are the ones in danger of becoming unreachable, so they must be consumed
-first; well-connected squares can wait. With this ordering the very first
-descent of the search almost always completes the tour --- backtracking in
-name, linear in practice.
+unvisited square that itself has the fewest unvisited onward moves}. Here
+is the rule at work on an empty $6 \times 6$ board, every candidate
+labeled with its count of onward moves:
 
-Two honest caveats. Ties (several squares with the same minimal degree)
-must be broken somehow, and on larger boards a poor tie-breaking rule can
-strand the pure heuristic in a dead end; keeping the backtracking machinery
-underneath restores certainty at no cost when the heuristic behaves. And
-greedy success is empirical, not guaranteed: the rule is a heuristic, not a
-theorem.
+\begin{center}
+\begin{tikzpicture}[scale=0.78]
+  \foreach \x in {0,...,5}
+    \foreach \y in {0,...,5} {
+      \pgfmathparse{mod(\x+\y,2) == 0 ? "white" : "black!12"}
+      \edef\c{\pgfmathresult}
+      \fill[\c] (\x, \y) rectangle ++(1, 1);
+    }
+  \draw (0, 0) rectangle (6, 6);
+  \node at (2.5, 2.5) {\LARGE\bfseries N};
+  % onward-move counts of each candidate, computed on the empty board
+  \foreach \x/\y/\d in {3/4/5, 4/3/5, 4/1/3, 3/0/3, 0/3/3, 1/4/3}
+    \node[circle, draw=red!70, fill=red!15, inner sep=1.5pt]
+      at (\x + 0.5, \y + 0.5) {\small $\d$};
+  \foreach \x/\y/\d in {1/0/2, 0/1/2}
+    \node[circle, draw=green!60!black, fill=green!25, inner sep=1.5pt]
+      at (\x + 0.5, \y + 0.5) {\small $\d$};
+\end{tikzpicture}
+
+\smallskip
+Warnsdorff picks a green square: only two ways onward from there.
+\end{center}
+
+The intuition is a rescue principle: the squares near the corner have the
+fewest ways in and out, so they are the ones in danger of becoming
+unreachable islands --- visit them while it is still possible, and leave
+the well-connected center for later. With this ordering the very first
+descent of the search tree almost always runs straight to a green leaf:
+backtracking in name, linear in practice.
+
+Two honest caveats, one of them visible above: the two green squares
+\emph{tie} at count 2, and ties must be broken somehow --- on larger
+boards a poor tie-breaking rule can strand the pure heuristic in a dead
+end. Keeping the backtracking machinery underneath restores certainty at
+no cost when the heuristic behaves. And greedy success is empirical, not
+guaranteed: the rule is a heuristic, not a theorem.
 
 \section{From mathematics to program}
 
