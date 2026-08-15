@@ -4,6 +4,11 @@ SHELL := /bin/bash
 # Every top-level directory containing a dune-project is a quiz.
 QUIZZES := $(patsubst %/dune-project,%,$(wildcard */dune-project))
 
+# Run dune through the opam switch resolved from the working directory, so
+# recipes use the pinned repo-local toolchain regardless of the caller's
+# shell environment.
+DUNE := opam exec -- dune
+
 .PHONY: all build test fmt clean list env
 
 all: build
@@ -30,18 +35,18 @@ define run_in
 endef
 
 build:
-	@$(call run_in,dune build)
+	@$(call run_in,$(DUNE) build)
 
 test:
-	@$(call run_in,dune test --force)
+	@$(call run_in,$(DUNE) test --force)
 
 fmt:
-	@$(call run_in,dune fmt)
+	@$(call run_in,$(DUNE) fmt)
 
 clean:
 	@for d in $(QUIZZES); do
 	  echo "== $$d =="
-	  (cd "$$d" && dune clean) || exit 1
+	  (cd "$$d" && $(DUNE) clean) || exit 1
 	done
 
 list:
@@ -50,12 +55,12 @@ list:
 # Non-interactive per-quiz bypasses: make build-<quiz>, test-<quiz>, fmt-<quiz>
 build-%:
 	@[ -f "$*/dune-project" ] || { echo "error: unknown quiz '$*'" >&2; exit 1; }
-	cd "$*" && dune build
+	cd "$*" && $(DUNE) build
 
 test-%:
 	@[ -f "$*/dune-project" ] || { echo "error: unknown quiz '$*'" >&2; exit 1; }
-	cd "$*" && dune test --force
+	cd "$*" && $(DUNE) test --force
 
 fmt-%:
 	@[ -f "$*/dune-project" ] || { echo "error: unknown quiz '$*'" >&2; exit 1; }
-	cd "$*" && dune fmt
+	cd "$*" && $(DUNE) fmt

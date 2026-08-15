@@ -26,6 +26,10 @@ enabled, selects the switch automatically whenever you are inside the repo;
 otherwise re-run `eval $(opam env)` per shell. Future upgrades of the
 global opam world then cannot break these quizzes.
 
+Without the hook or `eval`, prefix any command with `opam exec --` to run
+it in the pinned switch (e.g. `opam exec -- dune test`); the `make` targets
+already do this internally, so they always use the pinned toolchain.
+
 ## Building and testing
 
 A root `Makefile` drives all quizzes:
