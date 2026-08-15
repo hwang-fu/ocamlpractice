@@ -4,9 +4,14 @@ SHELL := /bin/bash
 # Every top-level directory containing a dune-project is a quiz.
 QUIZZES := $(patsubst %/dune-project,%,$(wildcard */dune-project))
 
-.PHONY: all build test fmt clean list
+.PHONY: all build test fmt clean list env
 
 all: build
+
+# Create (or update) the repo-local opam switch pinned by ocamlpractice.opam.
+# First run compiles the OCaml compiler: expect several minutes.
+env:
+	opam switch create . 5.4.0 --deps-only --yes || opam install . --deps-only --yes
 
 # $(call run_in,<command>): prompt for a quiz name; empty = run in all.
 define run_in
