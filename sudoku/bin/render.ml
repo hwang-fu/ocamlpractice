@@ -19,9 +19,9 @@ let unit_blue = rgb 208 226 250
 
 (* pacing: givens pour in quickly, each deduction lingers, and a
    contradiction holds longest so the red flash registers *)
-let givens_delay = 0.04
-let step_delay = 0.35
-let flash_delay = 0.8
+let givens_delay = 0.08
+let step_delay = 0.8
+let flash_delay = 1.4
 
 (* X core fonts; if a font is missing we silently keep the current one *)
 let digit_font = "-*-helvetica-bold-r-normal--34-*-*-*-*-*-iso8859-1"
