@@ -96,6 +96,7 @@ eliminations:
 
 \begin{center}
 \begin{tikzpicture}[scale=0.72]
+  \fill[green!12] (1, 0) rectangle (2, 1);
   \draw[gray!60] (0, 0) grid (9, 1);
   \draw[very thick] (0, 0) rectangle (9, 1);
   \node at (0.5, 0.5) {1};
@@ -111,7 +112,8 @@ eliminations:
 \end{tikzpicture}
 
 \smallskip
-A hidden single: only the second cell can still take the $4$.
+A hidden single: of the three unresolved cells, only the shaded one still
+has $4$ among its candidates.
 \end{center}
 
 Running eliminations and both rules until nothing changes is
