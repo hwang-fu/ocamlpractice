@@ -17,7 +17,8 @@ type step =
 let all_digits = [ 1; 2; 3; 4; 5; 6; 7; 8; 9 ]
 
 (* Candidate sets are 9-bit masks: bit [d - 1] set means digit [d] is still
-   possible. *)
+   possible. [full_mask] is the set of all nine digits, the state of an
+   untouched cell. *)
 let full_mask = 0b1_1111_1111
 
 (* [bit d] is the mask with only digit [d]'s bit set: bit 3 = 0b100. *)
@@ -26,19 +27,24 @@ let bit d = 1 lsl (d - 1)
 (* [has m d] tests whether digit [d]'s bit is set in mask [m]. *)
 let has m d = m land bit d <> 0
 
+(* [popcount m] counts the set bits of [m]: the size of the candidate set. *)
 let popcount m =
   let rec go m acc = if m = 0 then acc else go (m lsr 1) (acc + (m land 1)) in
   go m 0
 ;;
 
+(* [singleton_digit m] is the digit of a one-element mask (undefined
+   otherwise): the digit to place when a naked single fires. *)
 let singleton_digit m = List.find (has m) all_digits
 
+(* [units_of c] is the three units cell [c] belongs to. *)
 let units_of c =
   let r = c / 9
   and col = c mod 9 in
   [ Row r; Col col; Box ((r / 3 * 3) + (col / 3)) ]
 ;;
 
+(* [cells_of u] is the nine cells of unit [u], row-major. *)
 let cells_of = function
   | Row r -> List.init 9 (fun i -> (r * 9) + i)
   | Col c -> List.init 9 (fun i -> (i * 9) + c)
@@ -48,6 +54,7 @@ let cells_of = function
     List.init 9 (fun i -> ((r0 + (i / 3)) * 9) + c0 + (i mod 3))
 ;;
 
+(* the 27 units of the board: 9 rows, 9 columns, 9 boxes *)
 let all_units =
   List.concat_map
     (fun k -> List.init 9 k)
@@ -119,6 +126,9 @@ let rec propagate digits cands trace =
   if !fired then propagate digits cands trace
 ;;
 
+(* [mrv digits cands] is the unresolved cell with the fewest candidates
+   (minimum remaining values) -- the most promising place to guess, since a
+   wrong guess there is refuted fastest. Assumes at least one empty cell. *)
 let mrv digits cands =
   let best = ref (-1) in
   for c = 0 to 80 do
@@ -128,6 +138,10 @@ let mrv digits cands =
   !best
 ;;
 
+(* [search digits cands trace] propagates to the fixpoint, and if cells
+   remain unresolved, guesses at the MRV cell and recurses on a copy of the
+   state -- so backtracking is simply returning to the caller's intact
+   arrays. Returns the solved digits, or [None] if this branch is dead. *)
 let rec search digits cands trace =
   match propagate digits cands trace with
   | exception Dead -> None
@@ -155,6 +169,8 @@ let rec search digits cands trace =
       try_digits (List.filter (has cands.(c)) all_digits))
 ;;
 
+(* [solve grid] places the givens (catching contradictory ones), runs the
+   search, and returns the full reasoning trace either way. *)
 let solve grid =
   let trace = ref [] in
   let digits = Array.make 81 0
@@ -168,6 +184,8 @@ let solve grid =
   | () -> List.rev !trace, search digits cands trace
 ;;
 
+(* [parse s] reads the 81-character format: digits, '.' or '0' for empty.
+   The first offending character is reported by position. *)
 let parse s =
   if String.length s <> 81
   then Error (Printf.sprintf "expected 81 characters, got %d" (String.length s))
@@ -186,6 +204,7 @@ let parse s =
     | None -> Ok grid)
 ;;
 
+(* [to_string grid] prints the 81-character format, '.' for empty. *)
 let to_string grid =
   String.init 81 (fun i ->
     if grid.(i) = 0 then '.' else Char.chr (grid.(i) + Char.code '0'))
