@@ -1,3 +1,5 @@
+(* built-in puzzles in the 81-character format: the easy one dissolves
+   under propagation alone, the hard one forces guessing *)
 let easy_puzzle =
   "003020600900305001001806400008102900700000008006708200002609500800203009005010300"
 ;;
@@ -10,6 +12,7 @@ let hard_puzzle =
   "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......"
 ;;
 
+(* [builtin name] looks up a built-in puzzle by difficulty name. *)
 let builtin = function
   | "easy" -> Some easy_puzzle
   | "medium" -> Some medium_puzzle
@@ -34,6 +37,8 @@ let pretty grid =
   Buffer.contents b
 ;;
 
+(* [parse_or_exit s] parses a puzzle string or reports the error and
+   terminates. *)
 let parse_or_exit s =
   match Sudoku.parse s with
   | Ok grid -> grid
@@ -42,12 +47,15 @@ let parse_or_exit s =
     exit 1
 ;;
 
+(* [animate s] solves [s] and replays the reasoning in the tutor window;
+   an unsolvable puzzle is announced, then its refutation is replayed. *)
 let animate s =
   let trace, result = Sudoku.solve (parse_or_exit s) in
   if result = None then print_endline "this puzzle has no solution; the replay shows why";
   Render.run trace
 ;;
 
+(* [quiet s] solves [s] and prints the result to the console, no window. *)
 let quiet s =
   match Sudoku.solve (parse_or_exit s) with
   | _, Some solution -> print_string (pretty solution)

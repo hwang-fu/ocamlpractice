@@ -1,5 +1,6 @@
 open Graphics
 
+(* window and board geometry, in pixels; the board sits centered *)
 let win = 920
 let cell_px = 90
 let board_px = cell_px * 9
@@ -15,6 +16,9 @@ let guess_bg = rgb 255 224 178
 let flash_red = rgb 225 60 60
 let focus_yellow = rgb 255 240 150
 let unit_blue = rgb 208 226 250
+
+(* pacing: givens pour in quickly, each deduction lingers, and a
+   contradiction holds longest so the red flash registers *)
 let givens_delay = 0.04
 let step_delay = 0.35
 let flash_delay = 0.8
@@ -28,11 +32,13 @@ let try_font f =
   | Graphic_failure _ -> ()
 ;;
 
+(* how a digit arrived on the board; decides its color *)
 type kind =
   | KGiven
   | KDeduced
   | KGuess
 
+(* [kind_color k] is the drawing color of a digit of kind [k]. *)
 let kind_color = function
   | KGiven -> black
   | KDeduced -> deduced_green
@@ -46,6 +52,8 @@ let cell_origin c =
   margin + (col * cell_px), margin + ((8 - row) * cell_px)
 ;;
 
+(* [draw_centered_string x y s] draws [s] centered on the point (x, y),
+   measuring it in the currently selected font. *)
 let draw_centered_string x y s =
   let tw, th = text_size s in
   moveto (x - (tw / 2)) (y - (th / 2));
@@ -109,7 +117,10 @@ let run trace =
   auto_synchronize false;
   let digits = Array.make 81 0
   and kinds = Array.make 81 KGiven in
+  (* board snapshots taken at each guess, popped on backtrack *)
   let stack = ref [] in
+  (* [show ~hl ~delay ()] draws the current board with the given cell
+     highlights and pauses *)
   let show ?(hl = []) ?(delay = step_delay) () =
     draw_scene digits kinds hl;
     Unix.sleepf delay
@@ -138,12 +149,17 @@ let run trace =
          kinds.(c) <- KDeduced;
          show ~hl ()
        | Guess (c, d) ->
+         (* snapshot first, so a later Backtrack restores the pre-guess
+            board exactly *)
          stack := (Array.copy digits, Array.copy kinds) :: !stack;
          show ~hl:[ c, guess_bg ] ();
          digits.(c) <- d;
          kinds.(c) <- KGuess;
          show ~hl:[ c, guess_bg ] ()
+       (* the emptied cell flashes red; the board itself is untouched *)
        | Contradiction c -> show ~hl:[ c, flash_red ] ~delay:flash_delay ()
+       (* rewind to the snapshot of the failed guess (an empty stack can
+          only mean contradictory givens: nothing to rewind) *)
        | Backtrack ->
          (match !stack with
           | [] -> ()
