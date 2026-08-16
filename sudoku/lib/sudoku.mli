@@ -42,3 +42,18 @@ val to_string : int array -> string
     exist, one is returned. The trace is complete either way: replaying it
     (placements, guesses, backtracks) reproduces the solver's process. *)
 val solve : int array -> step list * int array option
+
+(** [solution_count ?cap grid] counts the puzzle's solutions, stopping
+    early once [cap] (default 2) are found. A puzzle is called {e proper}
+    when the count is exactly 1; contradictory givens count as 0. *)
+val solution_count : ?cap:int -> int array -> int
+
+(** [random_solved_grid ()] is a random complete valid grid. Draws on the
+    global [Random] state; seed with [Random.init] for reproducibility. *)
+val random_solved_grid : unit -> int array
+
+(** [generate ()] is a freshly generated proper puzzle that is also
+    {e minimal}: blanking any single given would admit a second solution.
+    Typically lands on 22 to 27 givens. Draws on the global [Random]
+    state. *)
+val generate : unit -> int array

@@ -167,6 +167,8 @@ $ dune exec bin/main.exe                  # tutor mode, built-in hard puzzle
 $ dune exec bin/main.exe -- -b easy       # built-ins: easy, medium, hard
 $ dune exec bin/main.exe -- <81 chars>    # your puzzle: digits, '.' empty
 $ dune exec bin/main.exe -- -q <81 chars> # console only, no window
+$ dune exec bin/main.exe -- -g            # generate a minimal proper puzzle, then animate
+$ dune exec bin/main.exe -- -gq           # generate and print only
 ```
 
 ## Notes

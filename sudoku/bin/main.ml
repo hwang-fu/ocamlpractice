@@ -55,6 +55,38 @@ let animate s =
   Render.run trace
 ;;
 
+(* [count_givens grid] counts the filled cells. *)
+let count_givens grid = Array.fold_left (fun n d -> if d <> 0 then n + 1 else n) 0 grid
+
+(* [difficulty trace] grades a puzzle by what the solver needed: guessing
+   makes it hard, hidden singles make it medium, naked singles alone easy. *)
+let difficulty trace =
+  let has p = List.exists p trace in
+  if
+    has (function
+      | Sudoku.Guess _ -> true
+      | _ -> false)
+  then "hard"
+  else if
+    has (function
+      | Sudoku.Hidden _ -> true
+      | _ -> false)
+  then "medium"
+  else "easy"
+;;
+
+(* [generate_mode ~animate ()] makes a fresh minimal proper puzzle, prints
+   it with its stats, and optionally replays its solution in the tutor. *)
+let generate_mode ~animate () =
+  Random.self_init ();
+  let puzzle = Sudoku.generate () in
+  let trace, _ = Sudoku.solve puzzle in
+  print_endline (Sudoku.to_string puzzle);
+  print_string (pretty puzzle);
+  Printf.printf "givens: %d  difficulty: %s\n%!" (count_givens puzzle) (difficulty trace);
+  if animate then Render.run trace
+;;
+
 (* [quiet s] solves [s] and prints the result to the console, no window. *)
 let quiet s =
   match Sudoku.solve (parse_or_exit s) with
@@ -67,6 +99,8 @@ let quiet s =
 let () =
   match Sys.argv with
   | [| _ |] -> animate hard_puzzle
+  | [| _; "-g" |] -> generate_mode ~animate:true ()
+  | [| _; "-gq" |] -> generate_mode ~animate:false ()
   | [| _; "-q"; s |] -> quiet s
   | [| _; "-b"; name |] ->
     (match builtin name with
@@ -79,7 +113,11 @@ let () =
     Printf.eprintf
       "usage: %s [puzzle]        tutor-animate a puzzle (default: built-in hard)\n\
       \       %s -b <name>      built-ins: easy, medium, hard\n\
-      \       %s -q <puzzle>    solve to the console, no window\n"
+      \       %s -q <puzzle>    solve to the console, no window\n\
+      \       %s -g             generate a minimal puzzle, then animate it\n\
+      \       %s -gq            generate and print only\n"
+      Sys.argv.(0)
+      Sys.argv.(0)
       Sys.argv.(0)
       Sys.argv.(0)
       Sys.argv.(0);

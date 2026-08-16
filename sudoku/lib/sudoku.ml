@@ -73,15 +73,19 @@ let peers =
 (* Raised when a cell runs out of candidates: the current branch is dead. *)
 exception Dead
 
-(* [place] records [step], writes the digit, and erases it from all peers'
+(* The solving machinery reports its actions through an [emit] callback of
+   type [step -> unit]: [solve] passes a trace appender, while the silent
+   searches (solution counting, grid generation) pass [ignore]. *)
+
+(* [place] reports [step], writes the digit, and erases it from all peers'
    candidate sets; a peer emptied by the erasure is a contradiction. *)
-let place digits cands trace c d step =
-  trace := step :: !trace;
+let place digits cands emit c d step =
+  emit step;
   (* a digit eliminated from this very cell cannot be placed here: this
      catches contradictory givens the moment they arrive *)
   if not (has cands.(c) d)
   then (
-    trace := Contradiction c :: !trace;
+    emit (Contradiction c);
     raise Dead);
   digits.(c) <- d;
   cands.(c) <- bit d;
@@ -92,19 +96,19 @@ let place digits cands trace c d step =
          cands.(p) <- cands.(p) land lnot (bit d);
          if cands.(p) = 0
          then (
-           trace := Contradiction p :: !trace;
+           emit (Contradiction p);
            raise Dead)))
     peers.(c)
 ;;
 
 (* Run naked singles and hidden singles to the fixpoint. *)
-let rec propagate digits cands trace =
+let rec propagate digits cands emit =
   let fired = ref false in
   for c = 0 to 80 do
     if digits.(c) = 0 && popcount cands.(c) = 1
     then (
       let d = singleton_digit cands.(c) in
-      place digits cands trace c d (Naked (c, d));
+      place digits cands emit c d (Naked (c, d));
       fired := true)
   done;
   if not !fired
@@ -118,16 +122,16 @@ let rec propagate digits cands trace =
               then (
                 match List.filter (fun c -> digits.(c) = 0 && has cands.(c) d) cells with
                 | [ c ] when not (List.exists (fun c' -> digits.(c') = d) cells) ->
-                  place digits cands trace c d (Hidden (c, d, u));
+                  place digits cands emit c d (Hidden (c, d, u));
                   fired := true
                 | _ -> ()))
            all_digits)
       all_units;
-  if !fired then propagate digits cands trace
+  if !fired then propagate digits cands emit
 ;;
 
 (* [mrv digits cands] is the unresolved cell with the fewest candidates
-   (minimum remaining values) -- the most promising place to guess, since a
+   (minimum remaining values): the most promising place to guess, since a
    wrong guess there is refuted fastest. Assumes at least one empty cell. *)
 let mrv digits cands =
   let best = ref (-1) in
@@ -138,12 +142,15 @@ let mrv digits cands =
   !best
 ;;
 
-(* [search digits cands trace] propagates to the fixpoint, and if cells
-   remain unresolved, guesses at the MRV cell and recurses on a copy of the
-   state -- so backtracking is simply returning to the caller's intact
-   arrays. Returns the solved digits, or [None] if this branch is dead. *)
-let rec search digits cands trace =
-  match propagate digits cands trace with
+(* [search ?order digits cands emit] propagates to the fixpoint, and if
+   cells remain unresolved, guesses at the MRV cell and recurses on a copy
+   of the state, so backtracking is simply returning to the caller's
+   intact arrays. [order] arranges the candidate digits tried at each
+   guess (identity for the deterministic solver, a shuffle for random grid
+   generation). Returns the solved digits, or [None] if this branch is
+   dead. *)
+let rec search ?(order = fun l -> l) digits cands emit =
+  match propagate digits cands emit with
   | exception Dead -> None
   | () ->
     if Array.for_all (fun d -> d <> 0) digits
@@ -155,33 +162,121 @@ let rec search digits cands trace =
         | d :: rest ->
           let digits' = Array.copy digits
           and cands' = Array.copy cands in
-          (match place digits' cands' trace c d (Guess (c, d)) with
+          (match place digits' cands' emit c d (Guess (c, d)) with
            | exception Dead ->
-             trace := Backtrack :: !trace;
+             emit Backtrack;
              try_digits rest
            | () ->
-             (match search digits' cands' trace with
+             (match search ~order digits' cands' emit with
               | Some _ as solved -> solved
               | None ->
-                trace := Backtrack :: !trace;
+                emit Backtrack;
                 try_digits rest))
       in
-      try_digits (List.filter (has cands.(c)) all_digits))
+      try_digits (order (List.filter (has cands.(c)) all_digits)))
 ;;
 
 (* [solve grid] places the givens (catching contradictory ones), runs the
    search, and returns the full reasoning trace either way. *)
 let solve grid =
   let trace = ref [] in
+  let emit s = trace := s :: !trace in
   let digits = Array.make 81 0
   and cands = Array.make 81 full_mask in
   match
     Array.iteri
-      (fun c d -> if d <> 0 then place digits cands trace c d (Given (c, d)))
+      (fun c d -> if d <> 0 then place digits cands emit c d (Given (c, d)))
       grid
   with
   | exception Dead -> List.rev !trace, None
-  | () -> List.rev !trace, search digits cands trace
+  | () -> List.rev !trace, search digits cands emit
+;;
+
+(* [count_search digits cands cap] counts the solutions reachable from
+   this state, silently, giving up once [cap] is reached. Unlike [search]
+   it keeps exploring after a success: uniqueness checking needs to know
+   whether a second solution exists, not what it is. *)
+let rec count_search digits cands cap =
+  match propagate digits cands ignore with
+  | exception Dead -> 0
+  | () ->
+    if Array.for_all (fun d -> d <> 0) digits
+    then 1
+    else (
+      let c = mrv digits cands in
+      let rec try_digits count = function
+        | [] -> count
+        | d :: rest ->
+          if count >= cap
+          then count
+          else (
+            let digits' = Array.copy digits
+            and cands' = Array.copy cands in
+            let count' =
+              match place digits' cands' ignore c d (Guess (c, d)) with
+              | exception Dead -> count
+              | () -> count + count_search digits' cands' (cap - count)
+            in
+            try_digits count' rest)
+      in
+      try_digits 0 (List.filter (has cands.(c)) all_digits))
+;;
+
+(* [solution_count ?cap grid] counts the puzzle's solutions up to [cap];
+   contradictory givens count as zero. A proper puzzle scores exactly 1. *)
+let solution_count ?(cap = 2) grid =
+  let digits = Array.make 81 0
+  and cands = Array.make 81 full_mask in
+  match
+    Array.iteri
+      (fun c d -> if d <> 0 then place digits cands ignore c d (Given (c, d)))
+      grid
+  with
+  | exception Dead -> 0
+  | () -> count_search digits cands cap
+;;
+
+(* in-place Fisher-Yates shuffle, drawing on the global [Random] state *)
+let shuffle a =
+  for i = Array.length a - 1 downto 1 do
+    let j = Random.int (i + 1) in
+    let t = a.(i) in
+    a.(i) <- a.(j);
+    a.(j) <- t
+  done
+;;
+
+(* [shuffle_list l] is a shuffled copy of [l]. *)
+let shuffle_list l =
+  let a = Array.of_list l in
+  shuffle a;
+  Array.to_list a
+;;
+
+(* [random_solved_grid ()] runs the solver on an empty board with shuffled
+   guess order: propagation plus MRV completes it into a random valid
+   grid almost without backtracking. *)
+let random_solved_grid () =
+  let digits = Array.make 81 0
+  and cands = Array.make 81 full_mask in
+  match search ~order:shuffle_list digits cands ignore with
+  | Some grid -> grid
+  | None -> assert false (* the empty board always has solutions *)
+;;
+
+(* [generate ()] digs a puzzle out of a random solved grid: visit the
+   cells in random order, blank each one, and restore it whenever the
+   blanking admits a second solution. The result is proper (unique
+   solution) and minimal (every remaining given is load-bearing). *)
+let generate () =
+  let puzzle = random_solved_grid () in
+  List.iter
+    (fun c ->
+       let saved = puzzle.(c) in
+       puzzle.(c) <- 0;
+       if solution_count puzzle <> 1 then puzzle.(c) <- saved)
+    (shuffle_list (List.init 81 (fun c -> c)));
+  puzzle
 ;;
 
 (* [parse s] reads the 81-character format: digits, '.' or '0' for empty.
