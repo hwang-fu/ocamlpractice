@@ -123,11 +123,19 @@ completely under propagation alone, with never a guess.
 
 \section{Search: when logic stalls}
 
+\paragraph{The stall.}
 On hard puzzles propagation stalls short of a solution: a full pass over
 all the rules changes nothing --- no elimination, no single --- yet some
 cells still hold several candidates. The fixpoint has been reached, and it
-is not yet the answer; the rules at hand are exhausted. Here is a stalled
-row, and what a guess does to it:
+is not yet the answer; the rules at hand are exhausted.
+
+\paragraph{The remedy: guess and retract.}
+Pick an unresolved cell, tentatively place one of its candidates, and
+propagate as if the guess were fact. Two things can happen: either the
+cascade rolls on --- sometimes all the way to a solution --- or it hits a
+contradiction (a cell stripped of every candidate), which refutes the
+guess; then rewind to the position before it and try the next candidate.
+Here is the remedy at work on a stalled row:
 
 \begin{center}
 \begin{tikzpicture}[scale=0.72]
@@ -166,15 +174,12 @@ row, and what a guess does to it:
 \end{tikzpicture}
 
 \smallskip
-No single rule fires above --- every unresolved cell has two candidates,
-every missing digit two homes. Guessing $2$ strips $2$ from the middle
-cell's candidates, leaving a naked single $4$; placing it leaves $7$ ---
-the cascade runs again.
-\end{center} The solver then guesses: pick an unresolved cell, try one of its
-candidates, propagate, and recurse; a contradiction (some cell left with
-no candidates) refutes the guess, and backtracking tries the next one.
-This is the familiar search tree --- with two twists that keep it tiny
-compared to the tours and queens of earlier quizzes:
+\emph{Guessing $2$ leaves a naked single $4$; placing it leaves $7$.}
+\end{center}
+
+\paragraph{Guessing well.}
+Recursing on guesses grows the familiar search tree of the earlier
+quizzes; two refinements keep it tiny:
 
 \begin{itemize}
   \item \textbf{Choose the most constrained cell} (fewest candidates
