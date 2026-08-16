@@ -77,5 +77,33 @@ let () =
            | _ -> false)
          trace)
    | _, Some _ -> assert false);
+  (* generator machinery, seeded for reproducibility *)
+  Random.init 7;
+  (* a random solved grid is a valid solution of the empty puzzle *)
+  assert_valid_solution empty (Sudoku.random_solved_grid ());
+  (* solution counting: proper puzzles score 1, the empty board caps out,
+     contradictory givens score 0 *)
+  assert (Sudoku.solution_count (parse_exn easy) = 1);
+  assert (Sudoku.solution_count (parse_exn hard) = 1);
+  assert (Sudoku.solution_count empty = 2);
+  assert (Sudoku.solution_count ~cap:10 empty = 10);
+  assert (Sudoku.solution_count bad = 0);
+  (* a generated puzzle is proper, minimal, and solvable by our solver *)
+  let puzzle = Sudoku.generate () in
+  assert (Sudoku.solution_count puzzle = 1);
+  let n_givens = Array.fold_left (fun n d -> if d <> 0 then n + 1 else n) 0 puzzle in
+  assert (n_givens >= 17 && n_givens <= 40);
+  Array.iteri
+    (fun c d ->
+       if d <> 0
+       then (
+         let dug = Array.copy puzzle in
+         dug.(c) <- 0;
+         (* minimality: blanking any given must admit a second solution *)
+         assert (Sudoku.solution_count dug = 2)))
+    puzzle;
+  (match Sudoku.solve puzzle with
+   | _, Some solution -> assert_valid_solution puzzle solution
+   | _, None -> assert false);
   print_endline "all tests passed"
 ;;
