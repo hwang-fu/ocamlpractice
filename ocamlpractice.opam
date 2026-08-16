@@ -10,4 +10,6 @@ depends: [
   "dune" {>= "3.23"}
   "graphics" {= "5.2.0"}
   "ocamlformat" {= "0.28.1"}
+  "ocaml-index" {= "5.7.1-504"}
+  "ocaml-lsp-server" {= "1.26.0"}
 ]

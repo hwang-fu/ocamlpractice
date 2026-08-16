@@ -35,8 +35,10 @@ define run_in
 	fi
 endef
 
+# @default builds libraries and executables; @ocaml-index additionally
+# produces project-wide indexes for editor tooling (LSP occurrences etc.)
 build:
-	@$(call run_in,$(DUNE) build)
+	@$(call run_in,$(DUNE) build @default @ocaml-index)
 
 test:
 	@$(call run_in,$(DUNE) test --force)
@@ -56,7 +58,7 @@ list:
 # Non-interactive per-quiz bypasses: make build-<quiz>, test-<quiz>, fmt-<quiz>
 build-%:
 	@[ -f "$*/dune-project" ] || { echo "error: unknown quiz '$*'" >&2; exit 1; }
-	cd "$*" && $(DUNE) build
+	cd "$*" && $(DUNE) build @default @ocaml-index
 
 test-%:
 	@[ -f "$*/dune-project" ] || { echo "error: unknown quiz '$*'" >&2; exit 1; }
