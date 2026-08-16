@@ -234,4 +234,16 @@ shrinking as eliminations cascade, deduced digits in one color, guesses
 in another, and a contradiction flashing before its branch rewinds.
 Constraint propagation made watchable.
 
+\paragraph{Generating puzzles.}
+The generator runs the machinery backwards. It first builds a random
+solved grid (the solver on an empty board, choices shuffled), then digs:
+visiting the cells in random order, it blanks each one and asks whether
+the puzzle still has exactly one solution, restoring the digit when it
+does not. The uniqueness question is answered by a solver variant that
+keeps searching after the first solution and stops at the second. What
+remains is proper (uniquely solvable) and minimal (every surviving given
+is load-bearing), typically 22 to 27 givens. Difficulty is graded by how
+the solver cracks the result: naked singles alone is easy, hidden singles
+needed is medium, guessing required is hard.
+
 \end{document}
