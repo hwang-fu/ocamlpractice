@@ -153,6 +153,22 @@ $ dune exec bin/main.exe -- -c    # time naive vs warnsdorff ordering (~1 min)
 Depends on the `timeit` quiz as a library, pinned into the local switch by
 `make env` (`opam pin add timeit ./timeit`).
 
+### sudoku
+
+Constraint-propagation sudoku solver (naked and hidden singles to a
+fixpoint, then MRV-guided backtracking) with a tutor mode that replays the
+solver's reasoning on a board: pencil marks shrink live, deductions appear
+green with their justifying cell or unit highlighted, guesses are orange,
+contradictions flash red and backtracking rewinds. See `docs/` for the
+mathematics and the trace vocabulary.
+
+```console
+$ dune exec bin/main.exe                  # tutor mode, built-in hard puzzle
+$ dune exec bin/main.exe -- -b easy       # built-ins: easy, medium, hard
+$ dune exec bin/main.exe -- <81 chars>    # your puzzle: digits, '.' empty
+$ dune exec bin/main.exe -- -q <81 chars> # console only, no window
+```
+
 ## Notes
 
 - Some quizzes (`cardioid`, `mandelbrot`, `koch_snowflake`) carry a short
