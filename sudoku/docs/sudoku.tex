@@ -123,8 +123,54 @@ completely under propagation alone, with never a guess.
 
 \section{Search: when logic stalls}
 
-On hard puzzles propagation reaches a stable position with unresolved
-cells. The solver then guesses: pick an unresolved cell, try one of its
+On hard puzzles propagation stalls short of a solution: a full pass over
+all the rules changes nothing --- no elimination, no single --- yet some
+cells still hold several candidates. The fixpoint has been reached, and it
+is not yet the answer; the rules at hand are exhausted. Here is a stalled
+row, and what a guess does to it:
+
+\begin{center}
+\begin{tikzpicture}[scale=0.72]
+  % stalled row
+  \fill[orange!15] (1, 3) rectangle (2, 4);
+  \draw[gray!60] (0, 3) grid (9, 4);
+  \draw[very thick] (0, 3) rectangle (9, 4);
+  \node at (0.5, 3.5) {1};
+  \node at (2.5, 3.5) {3};
+  \node at (3.5, 3.5) {5};
+  \node at (5.5, 3.5) {6};
+  \node at (7.5, 3.5) {8};
+  \node at (8.5, 3.5) {9};
+  \node[font=\scriptsize, text=gray] at (1.5, 3.5) {2 7};
+  \node[font=\scriptsize, text=gray] at (4.5, 3.5) {2 4};
+  \node[font=\scriptsize, text=gray] at (6.5, 3.5) {4 7};
+  \node[right, font=\small] at (9.3, 3.5)
+    {stalled: $2$, $4$, $7$ each have \emph{two} possible homes};
+  % the guess
+  \draw[->, thick] (4.5, 2.8) -- (4.5, 1.2)
+    node[midway, right, font=\small] {guess $2$ in the shaded cell, propagate};
+  % resolved row
+  \draw[gray!60] (0, 0) grid (9, 1);
+  \draw[very thick] (0, 0) rectangle (9, 1);
+  \node at (0.5, 0.5) {1};
+  \node at (2.5, 0.5) {3};
+  \node at (3.5, 0.5) {5};
+  \node at (5.5, 0.5) {6};
+  \node at (7.5, 0.5) {8};
+  \node at (8.5, 0.5) {9};
+  \node[orange!70!black] at (1.5, 0.5) {2};
+  \node[green!50!black] at (4.5, 0.5) {4};
+  \node[green!50!black] at (6.5, 0.5) {7};
+  \node[right, font=\small] at (9.3, 0.5)
+    {the guess (orange) revives the cascade (green)};
+\end{tikzpicture}
+
+\smallskip
+No single rule fires above --- every unresolved cell has two candidates,
+every missing digit two homes. Guessing $2$ strips $2$ from the middle
+cell's candidates, leaving a naked single $4$; placing it leaves $7$ ---
+the cascade runs again.
+\end{center} The solver then guesses: pick an unresolved cell, try one of its
 candidates, propagate, and recurse; a contradiction (some cell left with
 no candidates) refutes the guess, and backtracking tries the next one.
 This is the familiar search tree --- with two twists that keep it tiny
