@@ -23,6 +23,13 @@ type step =
   | Contradiction of int
   | Backtrack
 
+(** [cells_of u] is the nine cells of unit [u]. *)
+val cells_of : unit_kind -> int list
+
+(** [candidates grid c] is the digits no peer of [c] holds: the pencil
+    marks of an empty cell. *)
+val candidates : int array -> int -> int list
+
 (** [parse s] reads the 81-character interchange format: digits, with ['.']
     or ['0'] for empty cells. *)
 val parse : string -> (int array, string) result

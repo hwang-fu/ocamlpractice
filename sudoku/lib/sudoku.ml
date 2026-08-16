@@ -204,6 +204,12 @@ let parse s =
     | None -> Ok grid)
 ;;
 
+(* [candidates grid c] is the digits no peer of [c] holds: the pencil marks
+   of an empty cell, recomputable from placements alone. *)
+let candidates grid c =
+  List.filter (fun d -> not (List.exists (fun p -> grid.(p) = d) peers.(c))) all_digits
+;;
+
 (* [to_string grid] prints the 81-character format, '.' for empty. *)
 let to_string grid =
   String.init 81 (fun i ->
