@@ -35,8 +35,8 @@ $1$ to $9$ such that
   \item every \textbf{box} contains each digit exactly once.
 \end{itemize}
 Each cell therefore belongs to three \emph{units} (its row, its column,
-its box), and its 20 distinct \emph{peers} --- the other cells of those
-units --- can never share its digit.
+its box), and its 20 distinct \emph{peers}, the other cells of those
+units, can never share its digit.
 
 \begin{center}
 \begin{tikzpicture}[scale=0.52]
@@ -58,7 +58,7 @@ The solver's central data structure attaches to every empty cell its
 \emph{candidate set}: the digits not yet ruled out. A digit placed in a
 cell is erased from the candidates of all 20 peers. In the position below,
 the circled cell sees $1, 7$ in its row, $3, 9$ in its column and $4, 5$
-in its box, leaving candidates $\{2, 6, 8\}$ --- the small digits a
+in its box, leaving candidates $\{2, 6, 8\}$, the small digits a
 pencil-and-paper solver would write in the corner:
 
 \begin{center}
@@ -87,9 +87,9 @@ eliminations:
 \begin{itemize}
   \item \textbf{Naked single.} A cell whose candidate set shrinks to one
     digit must hold that digit. Placing it erases the digit from 20 more
-    candidate sets --- which may create new singles.
+    candidate sets, which may create new singles.
   \item \textbf{Hidden single.} If, within one unit, some digit remains
-    possible in only one cell, that cell must hold it --- even if the cell
+    possible in only one cell, that cell must hold it, even if the cell
     still has other candidates. Below, the digits $2, 4, 7$ are missing
     from the row; $4$ appears in only one candidate set, so it goes there:
 \end{itemize}
@@ -117,22 +117,22 @@ has $4$ among its candidates.
 \end{center}
 
 Running eliminations and both rules until nothing changes is
-\emph{constraint propagation} --- computing a fixpoint. Its power is easy
-to underestimate: most published easy and medium puzzles dissolve
+\emph{constraint propagation}: computing a fixpoint. Its power is easy
+to underestimate. Most published easy and medium puzzles dissolve
 completely under propagation alone, with never a guess.
 
 \section{Search: when logic stalls}
 
 \paragraph{The stall.}
 On hard puzzles propagation stalls short of a solution: a full pass over
-all the rules changes nothing --- no elimination, no single --- yet some
+all the rules changes nothing (no elimination, no single), yet some
 cells still hold several candidates. The fixpoint has been reached, and it
 is not yet the answer; the rules at hand are exhausted.
 
 \paragraph{The remedy: guess and retract.}
 Pick an unresolved cell, tentatively place one of its candidates, and
 propagate as if the guess were fact. Two things can happen: either the
-cascade rolls on --- sometimes all the way to a solution --- or it hits a
+cascade rolls on, sometimes all the way to a solution, or it hits a
 contradiction (a cell stripped of every candidate), which refutes the
 guess; then rewind to the position before it and try the next candidate.
 Here is the remedy at work on a stalled row:
@@ -183,11 +183,10 @@ quizzes; two refinements keep it tiny:
 
 \begin{itemize}
   \item \textbf{Choose the most constrained cell} (fewest candidates
-    remaining) --- the \emph{minimum remaining values} rule, \textbf{MRV}
-    for short --- the same
-    rescue-the-scarce principle as Warnsdorff's onward counts. A cell with
-    two candidates gives a wrong guess a 50\% chance of instant
-    refutation.
+    remaining), known as the \emph{minimum remaining values} rule,
+    \textbf{MRV} for short. This is the same rescue-the-scarce principle
+    as Warnsdorff's onward counts: a cell with two candidates gives a
+    wrong guess a 50\% chance of instant refutation.
   \item \textbf{Propagate after every guess.} Each guess triggers the full
     cascade, so consequences surface immediately and contradictions
     appear after a handful of placements, not deep in the tree.
@@ -201,7 +200,7 @@ quizzes; two refinements keep it tiny:
     and failing. A puzzle generator must run exactly that check on every
     candidate puzzle it digs out.
   \item \textbf{Seventeen givens.} No proper 9x9 puzzle with fewer than 17
-    givens exists (McGuire, Tugemann and Civario, 2012 --- by exhaustive
+    givens exists (McGuire, Tugemann and Civario, 2012, by exhaustive
     computer search), and 17-given puzzles do exist.
   \item \textbf{It scales badly, provably.} On generalized
     $n^2 \times n^2$ boards, sudoku is NP-complete; the 9x9 case is only
@@ -212,10 +211,27 @@ quizzes; two refinements keep it tiny:
 
 The program keeps the grid as 81 candidate sets (a solved cell is a
 singleton) and implements propagation as the fixpoint of the two rules;
-the solver wraps it in MRV-guided backtracking. The renderer draws what
-solvers on paper actually do: pencil marks shrinking as eliminations
-cascade, deduced digits appearing in one color, guesses in another, and a
-contradiction flashing before its branch rewinds --- constraint
-propagation made watchable.
+the solver wraps it in MRV-guided backtracking. Beyond the solved grid,
+the solver also returns its whole reasoning as a list of typed events,
+one per action, which the renderer replays:
+
+\begin{center}
+\begin{tabular}{ll}
+  \texttt{Given} & a starting digit is placed on the board \\
+  \texttt{Naked} & a naked single fires (section 2) \\
+  \texttt{Hidden} & a hidden single fires in the named unit (section 2) \\
+  \texttt{Guess} & propagation stalled; a candidate is tried at the MRV
+                   cell (section 3) \\
+  \texttt{Contradiction} & a cell lost its last candidate; this branch is
+                           dead (section 3) \\
+  \texttt{Backtrack} & the search rewinds to the latest guess and tries
+                       differently (section 3) \\
+\end{tabular}
+\end{center}
+
+The renderer draws what solvers on paper actually do: pencil marks
+shrinking as eliminations cascade, deduced digits in one color, guesses
+in another, and a contradiction flashing before its branch rewinds.
+Constraint propagation made watchable.
 
 \end{document}
