@@ -19,7 +19,11 @@ let all_digits = [ 1; 2; 3; 4; 5; 6; 7; 8; 9 ]
 (* Candidate sets are 9-bit masks: bit [d - 1] set means digit [d] is still
    possible. *)
 let full_mask = 0b1_1111_1111
+
+(* [bit d] is the mask with only digit [d]'s bit set: bit 3 = 0b100. *)
 let bit d = 1 lsl (d - 1)
+
+(* [has m d] tests whether digit [d]'s bit is set in mask [m]. *)
 let has m d = m land bit d <> 0
 
 let popcount m =
