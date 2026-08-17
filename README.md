@@ -171,6 +171,20 @@ $ dune exec bin/main.exe -- -g            # generate a minimal proper puzzle, th
 $ dune exec bin/main.exe -- -gq           # generate and print only
 ```
 
+### streams
+
+Memoized infinite streams (lazy corecursion): a stream library with
+take/map/filter/zip/iterate/merge, bridges to the stdlib's `Seq`, and the
+classic self-referential sequences: Fibonacci by zipping the stream with
+its own tail, primes by the lazy sieve, Hamming numbers by merging the
+stream's own scaled copies.
+
+```console
+$ dune exec bin/main.exe -- hamming 15
+1 2 3 4 5 6 8 9 10 12 15 16 18 20 24
+$ dune exec bin/main.exe -- primes 20    # sequences: nats, fibs, primes, hamming
+```
+
 ## Notes
 
 - Some quizzes (`cardioid`, `mandelbrot`, `koch_snowflake`) carry a short
