@@ -34,3 +34,26 @@ let to_seq (type elt) (producer : (elt -> unit) -> unit) : elt Seq.t =
             | _ -> None)
       }
 ;;
+
+(* a binary tree with values at the leaves *)
+type 'a tree =
+  | Leaf of 'a
+  | Node of 'a tree * 'a tree
+
+(* [fringe t] is the leaves of [t], left to right, on demand: a plain
+   recursive walk, paused and resumed by the generator machinery. *)
+let fringe t =
+  to_seq (fun yield ->
+    let rec walk = function
+      | Leaf x -> yield x
+      | Node (l, r) ->
+        walk l;
+        walk r
+    in
+    walk t)
+;;
+
+(* [same_fringe t1 t2] tests whether two trees hold the same leaves in
+   the same order; the two walks advance in lockstep and stop at the
+   first difference. *)
+let same_fringe t1 t2 = Seq.equal ( = ) (fringe t1) (fringe t2)

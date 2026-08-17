@@ -9,3 +9,17 @@
     [Effect.Continuation_already_resumed]. Wrap it in [Seq.memoize] to
     make it re-traversable. *)
 val to_seq : (('a -> unit) -> unit) -> 'a Seq.t
+
+(** A binary tree with values at the leaves. *)
+type 'a tree =
+  | Leaf of 'a
+  | Node of 'a tree * 'a tree
+
+(** [fringe t] is the leaves of [t], left to right, on demand.
+    Single-traversal, like every {!to_seq} result. *)
+val fringe : 'a tree -> 'a Seq.t
+
+(** [same_fringe t1 t2] is whether the two trees hold the same leaves in
+    the same left-to-right order, whatever their shapes. The walks run in
+    lockstep and stop at the first difference. *)
+val same_fringe : 'a tree -> 'a tree -> bool
