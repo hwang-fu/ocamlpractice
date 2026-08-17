@@ -13,7 +13,7 @@ let to_seq (type elt) (producer : (elt -> unit) -> unit) : elt Seq.t =
     type _ Effect.t += Yield : elt -> unit Effect.t
   end
   in
-  let yield x = perform (M.Yield x) in
+  let yield = fun x -> perform (M.Yield x) in
   fun () ->
     (* nothing has run before the consumer pulls this first node *)
     match_with
