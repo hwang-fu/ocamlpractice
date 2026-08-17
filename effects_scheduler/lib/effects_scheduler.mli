@@ -16,3 +16,17 @@ val spawn : (unit -> unit) -> unit
     queue, and lets the task at the front run. With no other task
     waiting, the current task just continues. *)
 val yield : unit -> unit
+
+(** A promise: a value of type ['a] that some task will produce and
+    other tasks may wait for. *)
+type 'a promise
+
+(** [async f] starts [f] as a new task, child first like {!spawn}, and
+    is the promise of its result: the promise is fulfilled when the task
+    finishes, waking every task paused on it. *)
+val async : (unit -> 'a) -> 'a promise
+
+(** [await p] is the value of the promise [p]. A fulfilled promise
+    answers immediately; otherwise the current task pauses until the
+    promise's task finishes. Several tasks may await one promise. *)
+val await : 'a promise -> 'a

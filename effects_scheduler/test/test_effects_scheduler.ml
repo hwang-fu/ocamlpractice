@@ -27,5 +27,36 @@ let () =
   assert (Buffer.contents log = "C1 C2 D1 ");
   (* yield with an empty queue is a harmless no-op *)
   Effects_scheduler.run (fun () -> Effects_scheduler.yield ());
+  (* async computations interleave; await collects their results *)
+  Buffer.clear log;
+  Effects_scheduler.run (fun () ->
+    let p =
+      Effects_scheduler.async (fun () ->
+        say "P1 ";
+        Effects_scheduler.yield ();
+        say "P2 ";
+        21)
+    in
+    let q =
+      Effects_scheduler.async (fun () ->
+        say "Q1 ";
+        2)
+    in
+    let v = Effects_scheduler.await p * Effects_scheduler.await q in
+    say "M%d " v);
+  assert (Buffer.contents log = "P1 Q1 P2 M42 ");
+  (* several tasks paused on one promise all wake on fulfillment *)
+  Buffer.clear log;
+  Effects_scheduler.run (fun () ->
+    let p =
+      Effects_scheduler.async (fun () ->
+        Effects_scheduler.yield ();
+        say "F ";
+        7)
+    in
+    Effects_scheduler.spawn (fun () -> say "W1:%d " (Effects_scheduler.await p));
+    Effects_scheduler.spawn (fun () -> say "W2:%d " (Effects_scheduler.await p));
+    say "S ");
+  assert (Buffer.contents log = "F W2:7 W1:7 S ");
   print_endline "all tests passed"
 ;;
