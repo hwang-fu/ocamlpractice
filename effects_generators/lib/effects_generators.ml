@@ -3,21 +3,12 @@
 open Effect
 open Effect.Deep
 
-(* [to_seq producer] runs [producer yield] under a handler that turns
-   every [yield x] into one node of a lazy sequence: the paused producer
-   travels inside the node's tail, and pulling the tail resumes it.
-
-   The [Yield] effect is declared locally, inside a local module, so its
-   payload can be exactly this call's element type [elt]. A single global
-   [Yield : 'a -> unit Effect.t] would make the payload existential: the
-   handler would receive a value of forgotten type and could not build a
-   typed sequence from it. Local module over a locally abstract type is
-   the standard idiom for a type declaration that mentions [elt].
-
-   The resulting sequence resumes one-shot continuations, so it may be
-   traversed ONCE; wrap it in [Seq.memoize] if you need to walk it again
-   (each node then caches, and each resumption happens exactly once). *)
+(* [to_seq producer] turns each [yield x] of the producer into one lazy
+   sequence node; the paused producer rides in the node's tail. Single
+   traversal only: see the mli. *)
 let to_seq (type elt) (producer : (elt -> unit) -> unit) : elt Seq.t =
+  (* a local effect, so the payload type is this call's [elt]; a global
+     polymorphic [Yield] would forget its payload type *)
   let module M = struct
     type _ Effect.t += Yield : elt -> unit Effect.t
   end
