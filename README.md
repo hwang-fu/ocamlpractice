@@ -185,6 +185,30 @@ $ dune exec bin/main.exe -- hamming 15
 $ dune exec bin/main.exe -- primes 20    # sequences: nats, fibs, primes, hamming
 ```
 
+### effects_generators
+
+First of the effect-handlers pair (OCaml 5). Generators built from a
+`Yield` effect: write a plain imperative producer, consume it as a lazy
+sequence that freezes the producer mid-loop between pulls. Finale: the
+classic same-fringe problem in three lines. The project README teaches
+effects from zero, timeline included.
+
+```console
+$ dune exec bin/main.exe    # generated squares + same-fringe verdicts
+```
+
+### effects_scheduler
+
+Second of the pair: cooperative concurrency from raw effects. A run
+queue of paused continuations plus four effects (`spawn`, `yield`,
+`async`, `await`) make a miniature of what OCaml's async libraries do
+underneath; tasks interleave deterministically and promises collect
+results across them.
+
+```console
+$ dune exec bin/main.exe    # watch two tasks interleave, then async/await
+```
+
 ## Notes
 
 - Some quizzes (`cardioid`, `mandelbrot`, `koch_snowflake`) carry a short
