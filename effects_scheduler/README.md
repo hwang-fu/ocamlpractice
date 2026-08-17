@@ -18,16 +18,16 @@ a miniature of them from nothing but effects.
 ## What the API will feel like
 
 ```ocaml
-Scheduler.run (fun () ->
-  Scheduler.spawn (fun () ->
+Effects_scheduler.run (fun () ->
+  Effects_scheduler.spawn (fun () ->
     for i = 1 to 3 do
       Printf.printf "task A step %d\n" i;
-      Scheduler.yield ()          (* politely let someone else run *)
+      Effects_scheduler.yield ()          (* politely let someone else run *)
     done);
-  Scheduler.spawn (fun () ->
+  Effects_scheduler.spawn (fun () ->
     for i = 1 to 3 do
       Printf.printf "task B step %d\n" i;
-      Scheduler.yield ()
+      Effects_scheduler.yield ()
     done))
 ```
 
@@ -36,13 +36,16 @@ though there is no threading anywhere. Each `yield ()` performs an
 effect; the handler stores the task's continuation at the back of the
 run queue and resumes whatever is at the front.
 
-The three operations, each one effect:
+The four operations, each one effect:
 
-- `spawn f` puts a new task on the queue ("run this too, when there is
-  time")
+- `spawn f` starts `f` as a new task, child first: it runs immediately
+  and the spawner pauses until a running task finishes or yields
 - `yield ()` pauses the current task, letting others run
-- `await p` pauses the current task until a promise `p` is filled, the
-  seed of async/await (stretch goal: promises + `async` returning them)
+- `async f` starts `f` like `spawn` and returns the promise of its
+  result
+- `await p` gives the promise's value: immediately if it is already
+  fulfilled, otherwise the current task pauses until the promise's task
+  finishes; any number of tasks may wait on one promise
 
 ## Why "cooperative"
 
@@ -52,17 +55,23 @@ weakness is also the model's strength: between pauses you can never be
 preempted, so there are no data races and no locks. Understanding this
 trade is understanding most of async programming.
 
-## What we will produce
+## What we produced
 
-- `lib`: the `Fork` / `Yield` effects, the run-queue scheduler loop, and
-  (stretch) promises with `async` / `await`
-- `test`: interleaving order captured in a buffer and asserted, spawn
-  inside spawn, starvation demo, await resolution order
-- `bin`: demo programs printing interleaved task output
+- `lib`: the `Yield` / `Fork` / `Async` / `Await` effects and the
+  scheduler loop over a queue of resumption thunks (a thunk bakes in
+  whatever value its paused task is waiting for, so one queue carries
+  differently-typed pauses)
+- `test`: exact interleaving orders captured in a buffer and asserted,
+  the never-yielding starvation case, await before and after
+  fulfillment, several waiters on one promise
+- `bin`: demo programs printing live interleaved task output
 
 ## Concepts covered
 
 - a queue of stored continuations as program state
 - the scheduler loop: the handler IS the runtime
-- spawn / yield / await semantics; cooperative vs preemptive trade-offs
+- spawn / yield / async / await semantics; cooperative versus preemptive
+  trade-offs
 - how async/await desugars to effects underneath real libraries
+- polymorphic recursion (`let rec exec : type r. ...`), needed because
+  one task runner serves tasks of every result type
