@@ -41,5 +41,37 @@ let () =
   in
   assert (not (Seq.equal ( = ) (counted [ 1; 9; 3; 4; 5 ]) (counted [ 1; 2; 3; 4; 5 ])));
   assert (!pulls = 4);
+  (* walking again from the head restarts the producer: same elements,
+     side effects run twice *)
+  let runs = ref 0 in
+  let restartable =
+    to_seq (fun yield ->
+      incr runs;
+      yield 1;
+      yield 2)
+  in
+  assert (List.of_seq restartable = [ 1; 2 ]);
+  assert (List.of_seq restartable = [ 1; 2 ]);
+  assert (!runs = 2);
+  (* pulling the same node twice resumes a one-shot continuation twice *)
+  (match to_seq (fun yield -> yield 1) () with
+   | Seq.Nil -> assert false
+   | Seq.Cons (_, tail) ->
+     ignore (tail ());
+     (match tail () with
+      | _ -> assert false
+      | exception Effect.Continuation_already_resumed -> ()));
+  (* memoize removes both hazards: two walks, producer runs once *)
+  let memo_runs = ref 0 in
+  let memoized =
+    Seq.memoize
+      (to_seq (fun yield ->
+         incr memo_runs;
+         yield 1;
+         yield 2))
+  in
+  assert (List.of_seq memoized = [ 1; 2 ]);
+  assert (List.of_seq memoized = [ 1; 2 ]);
+  assert (!memo_runs = 1);
   print_endline "all tests passed"
 ;;

@@ -6,9 +6,13 @@
     consumer: asking for one element runs it exactly up to its next
     [yield], where it pauses until the following element is asked for.
 
-    The resulting sequence can be walked only once; a second walk raises
-    [Effect.Continuation_already_resumed]. Wrap the sequence in
-    [Seq.memoize] if you need to walk it several times. *)
+    Sharing caution. Walking the sequence again from its head simply
+    restarts the producer from the beginning, running its side effects a
+    second time. Pulling the {e same} already-pulled node twice, however,
+    would resume a one-shot continuation twice and raises
+    [Effect.Continuation_already_resumed]. Wrapping the sequence in
+    [Seq.memoize] removes both hazards: every node is computed once and
+    cached, so repeated walks are safe and the producer runs once. *)
 val to_seq : (('a -> unit) -> unit) -> 'a Seq.t
 
 (** A binary tree that stores a value at every leaf and nothing at the
