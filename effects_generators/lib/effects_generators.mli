@@ -1,25 +1,33 @@
-(** Generators: push-style producers consumed as pull-style sequences. *)
+(** Generators: write an imperative producer, consume it as a lazy
+    sequence. *)
 
-(** [to_seq producer] is the lazy sequence of values that [producer]
-    passes to its [yield] argument, produced on demand: the producer runs
-    exactly as far as the consumer pulls, frozen mid-flight in between.
+(** Build a sequence out of an imperative producer function.
 
-    The sequence is {b single-traversal}: it resumes one-shot
-    continuations, so walking it a second time raises
-    [Effect.Continuation_already_resumed]. Wrap it in [Seq.memoize] to
-    make it re-traversable. *)
+    The producer receives a function, conventionally called [yield].
+    Every value the producer passes to [yield] becomes the next element
+    of the resulting sequence. The producer does not run ahead of the
+    consumer: asking for one element runs it exactly up to its next
+    [yield], where it pauses until the following element is asked for.
+
+    Warning: the resulting sequence can be walked only once. Walking it
+    a second time raises [Effect.Continuation_already_resumed]. If you
+    need to walk it several times, wrap it in [Seq.memoize]. *)
 val to_seq : (('a -> unit) -> unit) -> 'a Seq.t
 
-(** A binary tree with values at the leaves. *)
+(** A binary tree that stores a value at every leaf and nothing at the
+    inner nodes. *)
 type 'a tree =
   | Leaf of 'a
   | Node of 'a tree * 'a tree
 
-(** [fringe t] is the leaves of [t], left to right, on demand.
-    Single-traversal, like every {!to_seq} result. *)
+(** Hand out the values stored at the leaves of the tree, from the
+    leftmost leaf to the rightmost, as an on-demand sequence: the tree
+    is walked only as far as the consumer asks. Walkable once, like
+    every sequence built by {!to_seq}. *)
 val fringe : 'a tree -> 'a Seq.t
 
-(** [same_fringe t1 t2] is whether the two trees hold the same leaves in
-    the same left-to-right order, whatever their shapes. The walks run in
-    lockstep and stop at the first difference. *)
+(** Check whether two trees store the same leaf values in the same
+    left-to-right order, even when the tree shapes differ. The two trees
+    are walked together, one leaf at a time, and the walk stops as soon
+    as a difference is found. *)
 val same_fringe : 'a tree -> 'a tree -> bool

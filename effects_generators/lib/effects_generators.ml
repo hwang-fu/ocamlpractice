@@ -3,12 +3,14 @@
 open Effect
 open Effect.Deep
 
-(* [to_seq producer] turns each [yield x] of the producer into one lazy
-   sequence node; the paused producer rides in the node's tail. Single
-   traversal only: see the mli. *)
+(* Runs the producer under an effect handler. Each time the producer
+   calls yield, the handler pauses it and hands the consumer one sequence
+   element; asking for the next element resumes the paused producer.
+   Usage and the single-walk warning are in the mli. *)
 let to_seq (type elt) (producer : (elt -> unit) -> unit) : elt Seq.t =
-  (* a local effect, so the payload type is this call's [elt]; a global
-     polymorphic [Yield] would forget its payload type *)
+  (* The effect is declared locally so that its payload has this exact
+     call's element type. One shared polymorphic Yield would forget the
+     type of what it carries, and the handler could not use it. *)
   let module M = struct
     type _ Effect.t += Yield : elt -> unit Effect.t
   end
@@ -40,8 +42,9 @@ type 'a tree =
   | Leaf of 'a
   | Node of 'a tree * 'a tree
 
-(* [fringe t] is the leaves of [t], left to right, on demand: a plain
-   recursive walk, paused and resumed by the generator machinery. *)
+(* Walks the tree left to right and yields the value at every leaf. The
+   walk itself is ordinary recursion; the generator machinery takes care
+   of pausing it between leaves. *)
 let fringe t =
   to_seq (fun yield ->
     let rec walk = function
@@ -53,7 +56,6 @@ let fringe t =
     walk t)
 ;;
 
-(* [same_fringe t1 t2] tests whether two trees hold the same leaves in
-   the same order; the two walks advance in lockstep and stop at the
-   first difference. *)
+(* Compares the leaf values of the two trees pair by pair, advancing
+   both walks together and stopping at the first difference. *)
 let same_fringe t1 t2 = Seq.equal ( = ) (fringe t1) (fringe t2)
