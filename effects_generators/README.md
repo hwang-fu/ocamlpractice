@@ -19,7 +19,7 @@ addition".
 An **effect** is exactly that, but resumable. Three ingredients, then a
 timeline of how they run.
 
-**Ingredient 1: declare the effect.** This extends the open type
+**Ingredient 1: declare effects.** This extends the open type
 `Effect.t` with a new constructor, the same mechanism `exception`
 declarations use to extend `exn`. The `int` is the answer type: what a
 `perform` of this effect will evaluate to once the handler answers.
@@ -30,6 +30,33 @@ open Effect.Deep
 
 type _ Effect.t += Need_input : int Effect.t
 ```
+
+A program declares as many effects as it likes, with any mix of answer
+types, and each may also carry a payload toward the handler:
+
+```ocaml
+(* one grouped declaration... *)
+type _ Effect.t +=
+  | Get_line : string Effect.t           (* answer type: string *)
+  | Log : string -> unit Effect.t        (* payload: string; answer: unit *)
+  | Ask_user : string -> bool Effect.t   (* payload: string; answer: bool *)
+
+(* ...or separate declarations; identical meaning, and they may even
+   live in different modules or libraries *)
+type _ Effect.t += Tick : unit Effect.t
+```
+
+Keep the two directions of data straight:
+
+- the **payload** (the constructor argument) travels *up* to the
+  handler, like an exception's argument: `perform (Log "starting")`
+- the **answer type** (the parameter of `Effect.t`) travels *back down*
+  as the value of the `perform` expression: `perform Get_line : string`,
+  `perform (Ask_user "sure?") : bool`, `perform (Log "hi") : unit`
+
+One handler can serve several effects (its match has one arm per
+constructor it recognizes), or different handlers can each serve their
+own; an effect no arm recognizes is passed outward with `None`.
 
 **Ingredient 2: perform it.** Like `raise`, but the expression has a
 value, of the answer type:
@@ -135,3 +162,52 @@ machinery that effects give for free).
   triple
 - continuations as first-class values, `continue`, the one-shot rule
 - inversion of control: push-style code consumed pull-style
+
+## Appendix: the whole toolbox
+
+The stdlib `Effect` module is tiny; this table is essentially all of it.
+The difficulty of effects is conceptual, not surface area.
+
+| piece | type | role |
+|---|---|---|
+| `'a Effect.t` | extensible type | the questions; `'a` is the answer type |
+| `perform` | `'a Effect.t -> 'a` | ask; pauses until answered |
+| `Effect.Unhandled` | exception | raised when nobody answers |
+| `Deep.continuation` | `('a, 'b) continuation` | the bookmark: paused code awaiting an `'a`, eventually producing a `'b` |
+| `Deep.continue` | `('a, 'b) continuation -> 'a -> 'b` | resume with an answer |
+| `Deep.discontinue` | `('a, 'b) continuation -> exn -> 'b` | resume by injecting an exception at the pause point |
+| `Deep.try_with` | run `f x` under `{ effc }` | install an answerer; results and exceptions pass through |
+| `Deep.match_with` | run `f x` under `{ retc; exnc; effc }` | same, plus transform normal results and observe exceptions |
+| `Effect.Shallow` | module | one-question handlers, see below |
+
+Lifecycle rules, all three of them:
+
+1. A continuation resumes at most once, by `continue` or `discontinue`;
+   a second resume is a runtime error. Every captured `k` should
+   eventually see exactly one of the two: `discontinue` exists so a
+   paused computation holding resources can die properly, unwinding
+   through its own cleanup handlers instead of being silently dropped.
+2. A `perform` with no handler up the stack raises `Effect.Unhandled`.
+   The type system does not track effects (a known limitation, active
+   research), so this is discovered at run time.
+3. A continuation reaches from the `perform` up to the installing
+   `try_with` or `match_with` and no further; that boundary is what
+   "delimited" means.
+
+Deep versus shallow: a **deep** handler, once installed, covers every
+effect the computation performs for its whole lifetime; answer a
+`Yield`, and the next `Yield` lands in the same handler. A **shallow**
+handler covers exactly one perform, after which you must install a
+handler again, possibly a different one; useful when the protocol
+changes between questions. Deep is the sensible default, and both these
+quizzes use it.
+
+Finally, the design space. What a handler does with `k` decides what
+you have built; every effects library is a row of this table:
+
+| the handler... | you have built |
+|---|---|
+| continues immediately with an answer | dynamic binding, dependency injection |
+| drops or discontinues `k` | exceptions, cancellation |
+| stores one `k`, returns to the caller | a generator (this quiz) |
+| stores many `k`s in a queue, resumes them in turns | a scheduler (quiz B) |
